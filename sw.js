@@ -1,4 +1,4 @@
-const CACHE = 'worklog-v5';
+const CACHE = 'worklog-v8';
 const CORE = ['./', './index.html', './manifest.json',
   './icon-32.png', './icon-180.png', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 const LIBS = [
@@ -23,8 +23,31 @@ self.addEventListener('activate', e => {
   })());
 });
 
+// Страница приложения: сначала сеть, кэш — запасной вариант.
+// Так новая версия подхватывается сразу, а без интернета работает старая.
+function isPage(req) {
+  return req.mode === 'navigate' ||
+         (req.method === 'GET' && (req.headers.get('accept') || '').includes('text/html'));
+}
+
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+
+  if (isPage(e.request)) {
+    e.respondWith((async () => {
+      try {
+        const fresh = await fetch(e.request, { cache: 'no-store' });
+        const c = await caches.open(CACHE);
+        c.put('./index.html', fresh.clone()).catch(() => {});
+        return fresh;
+      } catch (err) {
+        return (await caches.match('./index.html')) || (await caches.match('./')) || Response.error();
+      }
+    })());
+    return;
+  }
+
+  // Иконки, манифест, библиотеки: сначала кэш — они меняются редко.
   e.respondWith((async () => {
     const hit = await caches.match(e.request);
     if (hit) return hit;
@@ -34,7 +57,7 @@ self.addEventListener('fetch', e => {
       c.put(e.request, res.clone()).catch(() => {});
       return res;
     } catch (err) {
-      return (await caches.match('./index.html')) || Response.error();
+      return Response.error();
     }
   })());
 });

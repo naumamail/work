@@ -56,6 +56,9 @@ input,select,textarea{font:inherit;color:inherit}
 .figs{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--rule)}
 .fig{padding:12px 6px;text-align:center;border-inline-end:1px solid var(--rule)}
 .fig:last-child{border-inline-end:0}
+.fig.tap{cursor:pointer;position:relative;font:inherit;color:inherit;background:none;border-top:0;border-bottom:0}
+.fig.tap::after{content:"✎";position:absolute;top:6px;inset-inline-end:7px;font-size:9px;color:var(--rule)}
+.fig.tap:active{background:#F4F7F9}
 .fig b{display:block;font-size:29px;line-height:1;font-weight:700;font-variant-numeric:tabular-nums}
 .fig span{display:block;font-size:8.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--soft);font-weight:700;margin-top:7px}
 .fig.g b{color:var(--mark)}
@@ -238,8 +241,8 @@ tr.total td{border-top:1.5px solid #14213A!important;border-bottom:0;font-weight
     </div>
     <div class="figs">
       <div class="fig"><b id="fWorked">0</b><span data-i18n="sum.worked"></span></div>
-      <div class="fig"><b id="fBilled">—</b><span data-i18n="sum.billed"></span></div>
-      <div class="fig g"><b id="fBank">0</b><span data-i18n="sum.bank"></span></div>
+      <button class="fig tap" id="tileBilled" type="button"><b id="fBilled">—</b><span data-i18n="sum.billed"></span></button>
+      <button class="fig g tap" id="tileBank" type="button"><b id="fBank">0</b><span data-i18n="sum.bank"></span></button>
     </div>
   </div>
 
@@ -299,7 +302,7 @@ tr.total td{border-top:1.5px solid #14213A!important;border-bottom:0;font-weight
 
 <!-- Закрытие -->
 <div class="sheet" id="sheetClose">
-  <div class="sheet-h"><b data-i18n="close.title"></b><button class="iconbtn" data-close type="button" aria-label="Close">✕</button></div>
+  <div class="sheet-h"><b data-i18n="inv.title"></b><button class="iconbtn" data-close type="button" aria-label="Close">✕</button></div>
   <div class="sheet-b">
     <p style="margin:0 0 16px;font-size:14px;color:var(--soft)" id="closeIntro"></p>
     <div class="f" style="margin-bottom:14px"><span id="lblDays" data-i18n="close.days"></span>
@@ -313,8 +316,26 @@ tr.total td{border-top:1.5px solid #14213A!important;border-bottom:0;font-weight
     <div class="calc" id="closeCalc"></div>
     <label class="f"><span data-i18n="close.invNo"></span><input id="closeInv" autocomplete="off"></label>
     <label class="f"><span data-i18n="close.note"></span><input id="closeNote" autocomplete="off"></label>
-    <button class="btn primary" id="closeConfirm"></button>
-    <button class="btn ghost hidden" id="closeReopen"></button>
+    <button class="btn primary" id="invSave"></button>
+    <p class="hint" id="invOpenNote" style="margin:8px 0 14px;text-align:center"></p>
+    <button class="btn" id="invLock"></button>
+    <button class="btn ghost hidden" id="invReopen"></button>
+  </div>
+</div>
+
+<!-- Банк дней -->
+<div class="sheet" id="sheetBank">
+  <div class="sheet-h"><b data-i18n="bank.title"></b><button class="iconbtn" data-close type="button" aria-label="Close">✕</button></div>
+  <div class="sheet-b">
+    <div class="calc" id="bankCalc"></div>
+    <div class="f" style="margin-bottom:14px"><span id="lblBank" data-i18n="bank.opening"></span>
+      <div class="stepper">
+        <button id="bkMinus" type="button" aria-label="-1">−</button>
+        <input id="bkDays" type="number" inputmode="numeric" aria-labelledby="lblBank">
+        <button id="bkPlus" type="button" aria-label="+1">+</button>
+      </div>
+      <div class="hint" data-i18n="bank.hint"></div></div>
+    <button class="btn primary" id="bankSave"></button>
   </div>
 </div>
 
@@ -395,6 +416,12 @@ en:{
  'res.title':'Day bank','res.avail':'days available',
  'res.empty':'No month has been closed yet. Log your days, then close the month — the difference between days worked and days invoiced is banked here.',
  'btn.close':'Close month','btn.closeEdit':'Edit month closing','btn.export':'Export PDF report',
+ 'btn.invoice':'Set invoice days','sum.tap':'tap to change',
+ 'inv.title':'Invoice for this month','inv.save':'Save','inv.closeBtn':'Save and close month',
+ 'inv.openNote':'The month stays open — you can keep logging days and change this number any time.',
+ 'bank.title':'Day bank','bank.opening':'Starting balance','bank.now':'Current balance',
+ 'bank.hint':'Days you had banked before you started using this app. The rest is calculated automatically from closed months.',
+ 'bank.save':'Save','msg.bankSaved':'Day bank updated','msg.invSaved':'Invoice days saved',
  'day.marked':'Workday','day.presets':'What you did','day.what':'Description','day.place':'Location',
  'day.save':'Save','day.repeat':'Copy previous workday','day.remove':'Remove this workday','day.tapEdit':'tap again to edit',
  'day.setDefault':'Use this as my default',
@@ -423,6 +450,7 @@ en:{
  'rep.out':'Days billed this period','rep.closing':'Balance carried to next period',
  'rep.billing':'Billing summary','rep.rate':'Day rate','rep.qty':'Days billed','rep.total':'Total','rep.vat':'Amount excludes VAT',
  'rep.hist':'Previous periods','rep.period':'Period','rep.hw':'Worked','rep.hb':'Billed','rep.hm':'Movement','rep.hbal':'Balance',
+ 'led.w':'worked','led.b':'invoiced',
  'rep.sigC':'Contractor signature','rep.sigK':'Client approval','rep.foot':'Workday report · attachment to invoice',
  'msg.logged':'Logged','msg.unlogged':'Day removed','msg.saved':'Saved','msg.closed':'Month closed','msg.reopened':'Month reopened',
  'msg.undo':'Undo','msg.pdfReady':'PDF saved to your device','msg.defSaved':'Saved as your default',
@@ -438,17 +466,23 @@ he:{
  'stamp.mark':'סמן את היום','stamp.marked':'היום סומן','stamp.add':'הוסף תיאור',
  'stamp.other':'אתה צופה בחודש אחר.','stamp.back':'חזרה לחודש הנוכחי',
  'cal.title':'יומן החודש','cal.hint':'הקש על יום','cal.lg1':'יום עבודה','cal.lg2':'קיים תיאור',
- 'cal.fill':'סמן את כל ימי החול','cal.clear':'נקה את החודש',
+ 'cal.fill':'סמן את כל ימי החול בחודש','cal.clear':'נקה את החודש',
  'res.title':'בנק הימים','res.avail':'ימים זמינים',
- 'res.empty':'עדיין לא נסגר אף חודש. סמן ימי עבודה ולחץ «סגור חודש» — ההפרש בין הימים שעבדת לימים שחויבו ייצבר כאן.',
+ 'res.empty':'עדיין לא נסגר אף חודש. סמן ימי עבודה, קבע כמה מהם נכנסים לחשבונית וסגור את החודש — ההפרש ייצבר כאן.',
  'btn.close':'סגור חודש','btn.closeEdit':'ערוך סגירת חודש','btn.export':'ייצוא דוח PDF',
+ 'btn.invoice':'קביעת ימים לחשבונית','sum.tap':'הקש לשינוי',
+ 'inv.title':'החשבונית לחודש זה','inv.save':'שמור','inv.closeBtn':'שמור וסגור את החודש',
+ 'inv.openNote':'החודש נשאר פתוח — אפשר להמשיך לסמן ימים ולשנות את המספר בכל רגע.',
+ 'bank.title':'בנק הימים','bank.opening':'יתרת פתיחה','bank.now':'היתרה הנוכחית',
+ 'bank.hint':'הימים שצברת לפני שהתחלת להשתמש באפליקציה. השאר מחושב אוטומטית מהחודשים הסגורים.',
+ 'bank.save':'שמור','msg.bankSaved':'בנק הימים עודכן','msg.invSaved':'הימים לחשבונית נשמרו',
  'day.marked':'יום עבודה','day.presets':'מה בוצע','day.what':'תיאור','day.place':'מיקום',
  'day.save':'שמור','day.repeat':'העתק מיום העבודה הקודם','day.remove':'הסר את יום העבודה','day.tapEdit':'הקש שוב לעריכה',
  'day.setDefault':'קבע כברירת המחדל שלי',
  'close.title':'סגירת חודש','close.days':'ימים בחשבונית',
  'close.daysHint':'כמה ימים אתה מחייב את הלקוח עבור החודש הזה',
  'close.invNo':'מספר חשבונית','close.note':'הערה לדוח',
- 'close.before':'יתרת פתיחה','close.worked':'ימי עבודה','close.billed':'חויב בחשבונית',
+ 'close.before':'יתרת פתיחה','close.worked':'ימי עבודה','close.billed':'ימים בחשבונית',
  'close.toBank':'נצבר לבנק','close.fromBank':'נמשך מהבנק','close.after':'יתרת סגירה',
  'close.confirm':'סגור חודש','close.save':'שמור שינויים','close.reopen':'פתח את החודש מחדש',
  'exp.building':'מכין PDF…',
@@ -463,13 +497,14 @@ he:{
  'set.install':'הנתונים נשמרים במכשיר הזה. מומלץ לגבות פעם בחודש.\nהתקנה: אייפון — שיתוף ← הוסף למסך הבית. אנדרואיד — תפריט ← התקן אפליקציה. מחשב — סמל ההתקנה בשורת הכתובת.',
  'rep.eye':'נספח לחשבונית','rep.title':'דוח ימי עבודה','rep.issued':'תאריך הפקה','rep.invoice':'חשבונית',
  'rep.contractor':'נותן השירות','rep.client':'הלקוח',
- 'rep.worked':'ימי עבודה','rep.billed':'ימים לחיוב','rep.move':'תנועה בבנק','rep.balance':'יתרת בנק',
+ 'rep.worked':'ימי עבודה','rep.billed':'ימים לחיוב','rep.move':'תנועה ביתרה','rep.balance':'יתרת ימים',
  'rep.days':'פירוט ימי העבודה','rep.no':'#','rep.date':'תאריך','rep.day':'יום','rep.place':'מיקום','rep.desc':'תיאור',
  'rep.nodays':'לא נרשמו ימים בתקופה זו',
- 'rep.bank':'תנועת בנק הימים','rep.opening':'יתרה מתקופה קודמת','rep.added':'ימים שנעבדו בתקופה',
- 'rep.out':'ימים שחויבו בתקופה','rep.closing':'יתרה להעברה לתקופה הבאה',
+ 'rep.bank':'תנועת בנק הימים','rep.opening':'יתרה מתקופה קודמת','rep.added':'ימי עבודה בתקופה',
+ 'rep.out':'ימים לחיוב בתקופה','rep.closing':'יתרה להעברה לתקופה הבאה',
  'rep.billing':'סיכום חיוב','rep.rate':'תעריף יומי','rep.qty':'ימים לחיוב','rep.total':'סה״כ','rep.vat':'הסכום אינו כולל מע״מ',
- 'rep.hist':'תקופות קודמות','rep.period':'תקופה','rep.hw':'נעבד','rep.hb':'חויב','rep.hm':'תנועה','rep.hbal':'יתרה',
+ 'rep.hist':'תקופות קודמות','rep.period':'תקופה','rep.hw':'עבודה','rep.hb':'חיוב','rep.hm':'תנועה','rep.hbal':'יתרה',
+ 'led.w':'ימי עבודה','led.b':'בחשבונית',
  'rep.sigC':'חתימת נותן השירות','rep.sigK':'אישור הלקוח','rep.foot':'דוח ימי עבודה · נספח לחשבונית',
  'msg.logged':'נרשם','msg.unlogged':'היום הוסר','msg.saved':'נשמר','msg.closed':'החודש נסגר','msg.reopened':'החודש נפתח מחדש',
  'msg.undo':'ביטול','msg.pdfReady':'ה‑PDF נשמר במכשיר','msg.defSaved':'נשמר כברירת המחדל שלך',
@@ -513,7 +548,7 @@ let S = { v:2, lang:'en', weekStart:0,
   profile:{name:'',biz:'',phone:'',email:'',addr:''},
   client:{name:'',contact:'',email:'',phone:''},
   billing:{rate:0,cur:'ILS'},
-  bankStart:0, presets:null, defaults:{desc:'',place:''}, days:{}, closures:{} };
+  bankStart:0, presets:null, defaults:{desc:'',place:''}, days:{}, months:{} };
 let view = new Date(); view.setDate(1);
 let editKey = null, lastPdf = null;
 
@@ -527,12 +562,34 @@ const money = n => (CUR[S.billing.cur]||'') + ' ' + Number(n||0).toLocaleString(
 const presets = () => (S.presets && S.presets.length) ? S.presets : DEF_PRESETS[L];
 const weekendDays = () => S.weekStart===0 ? [5,6] : [0,6];
 
+/* переносим данные из прежней версии (closures -> months) */
+function migrate(){
+  let changed=false;
+  if(!S.months || typeof S.months!=='object'){ S.months={}; changed=true; }
+  if(S.closures && typeof S.closures==='object'){
+    changed=true;
+    for(const k in S.closures){
+      const c=S.closures[k];
+      if(!S.months[k]) S.months[k]={billed:Number(c.billed)||0, inv:c.inv||'', note:c.note||'',
+        closed:true, closedAt:c.closedAt||null};
+    }
+    delete S.closures;
+  }
+  S.v=3;
+  return changed;
+}
+
 /* ══════════ CALC ══════════ */
 const workedIn = mk => Object.keys(S.days).filter(k=>k.startsWith(mk+'-') && S.days[k] && S.days[k].w).length;
+const isClosed = mk => !!(S.months[mk] && S.months[mk].closed);
+function billedOf(mk){
+  const m = S.months[mk];
+  return (m && m.billed !== null && m.billed !== undefined) ? Number(m.billed) : null;
+}
 function chain(){
   let bal = Number(S.bankStart)||0; const rows=[];
-  for(const k of Object.keys(S.closures).sort()){
-    const c=S.closures[k], w=workedIn(k), inv=Number(c.billed)||0;
+  for(const k of Object.keys(S.months).filter(x=>S.months[x].closed).sort()){
+    const c=S.months[k], w=workedIn(k), inv=Number(c.billed)||0;
     const r={mk:k,before:bal,worked:w,billed:inv,move:w-inv,after:bal+w-inv,inv:c.inv||'',note:c.note||''};
     bal=r.after; rows.push(r);
   } return rows;
@@ -552,8 +609,10 @@ function applyLang(){
   document.getElementById('daySave').textContent = t('day.save');
   document.getElementById('dayRepeat').textContent = t('day.repeat');
   document.getElementById('dayRemove').textContent = t('day.remove');
-  document.getElementById('closeConfirm').textContent = t('close.confirm');
-  document.getElementById('closeReopen').textContent = t('close.reopen');
+  document.getElementById('invSave').textContent = t('inv.save');
+  document.getElementById('invLock').textContent = t('inv.closeBtn');
+  document.getElementById('invReopen').textContent = t('close.reopen');
+  document.getElementById('bankSave').textContent = t('bank.save');
   document.getElementById('btnExpData').textContent = t('set.expData');
   document.getElementById('btnImpData').textContent = t('set.impData');
   document.getElementById('installHelp').textContent = t('set.install');
@@ -566,17 +625,20 @@ function applyLang(){
 
 /* ══════════ RENDER ══════════ */
 function render(){
-  const mk = mkey(view), c = S.closures[mk], worked = workedIn(mk), before = bankBefore(mk);
+  const mk = mkey(view), closed = isClosed(mk), worked = workedIn(mk), before = bankBefore(mk);
+  const billed = billedOf(mk);
   document.getElementById('mTitle').textContent = mName(mk);
-  document.getElementById('mState').innerHTML = c
+  document.getElementById('mState').innerHTML = closed
     ? `<span class="badge closed">${t('st.closed')}</span>` : `<span class="badge open">${t('st.open')}</span>`;
   document.getElementById('fWorked').textContent = worked;
-  document.getElementById('fBilled').textContent = c ? c.billed : '—';
-  document.getElementById('fBank').textContent = c ? (before + worked - c.billed) : before;
+  document.getElementById('fBilled').textContent = billed === null ? '—' : billed;
+  document.getElementById('fBank').textContent = billed === null ? before : (before + worked - billed);
   const bc = document.getElementById('btnClose');
-  bc.textContent = c ? t('btn.closeEdit') : t('btn.close');
-  bc.className = c ? 'btn' : 'btn primary';
-  document.getElementById('btnExport').className = c ? 'btn primary' : 'btn';
+  bc.textContent = closed ? t('btn.closeEdit') : t('btn.invoice');
+  bc.className = closed ? 'btn' : 'btn primary';
+  document.getElementById('btnExport').className = closed ? 'btn primary' : 'btn';
+  document.getElementById('tileBilled').title = t('sum.tap');
+  document.getElementById('tileBank').title = t('sum.tap');
   renderStamp(); renderGrid(); renderBank();
 }
 function renderStamp(){
@@ -628,7 +690,7 @@ function renderBank(){
   if(!rows.length){ L2.innerHTML=`<div class="empty">${t('res.empty')}</div>`; return; }
   L2.innerHTML = rows.map(r=>{
     const cls=r.move>0?'plus':r.move<0?'minus':'zero';
-    return `<div class="lrow"><div>${mName(r.mk)}<small>${t('rep.hw')} ${r.worked} · ${t('rep.hb')} ${r.billed}</small></div>
+    return `<div class="lrow"><div>${mName(r.mk)}<small>${t('led.w')} ${r.worked} · ${t('led.b')} ${r.billed}</small></div>
       <div class="mv ${cls}" dir="ltr">${r.move>0?'+':''}${r.move}</div><div class="bal" dir="ltr">${r.after}</div></div>`;
   }).join('');
 }
@@ -654,7 +716,7 @@ function lastWorkday(before){
   return ks.length?S.days[ks[ks.length-1]]:null;
 }
 function dayTap(key){
-  if(S.closures[mkey(view)]){ toast(t('msg.closedLock')); return; }
+  if(isClosed(mkey(view))){ toast(t('msg.closedLock')); return; }
   const r=S.days[key];
   if(r && r.w) openDay(key); else quickLog(key);
 }
@@ -669,7 +731,7 @@ async function quickLog(key){
   }});
 }
 function openDay(key){
-  if(S.closures[mkey(view)]){ toast(t('msg.closedLock')); return; }
+  if(isClosed(mkey(view))){ toast(t('msg.closedLock')); return; }
   editKey=key;
   const [y,m,d]=key.split('-').map(Number), dt=new Date(y,m-1,d), rec=S.days[key]||{};
   document.getElementById('dayTitle').textContent=`${fmtDate(key)} \u00b7 ${DOWF[L][dt.getDay()]}`;
@@ -730,42 +792,48 @@ document.getElementById('btnStamp').onclick=()=>dayTap(dkey(new Date()));
 document.getElementById('prevM').onclick=()=>{ view.setMonth(view.getMonth()-1); render(); };
 document.getElementById('nextM').onclick=()=>{ view.setMonth(view.getMonth()+1); render(); };
 document.getElementById('fillMonth').onclick=async()=>{
-  const mk=mkey(view); if(S.closures[mk]){ toast(t('msg.closedLock')); return; }
+  const mk=mkey(view); if(isClosed(mk)){ toast(t('msg.closedLock')); return; }
   const y=view.getFullYear(),m=view.getMonth(),tot=new Date(y,m+1,0).getDate(),we=weekendDays();
   for(let d=1;d<=tot;d++){ const dt=new Date(y,m,d); if(we.includes(dt.getDay())) continue;
     const k=`${y}-${p2(m+1)}-${p2(d)}`; S.days[k]=Object.assign({n:'',p:''},S.days[k],{w:1}); }
   await Store.save(S); render(); toast(t('msg.saved'));
 };
 document.getElementById('clearMonth').onclick=async()=>{
-  const mk=mkey(view); if(S.closures[mk]){ toast(t('msg.closedLock')); return; }
+  const mk=mkey(view); if(isClosed(mk)){ toast(t('msg.closedLock')); return; }
   if(!confirm(t('msg.confirmClear'))) return;
   Object.keys(S.days).filter(k=>k.startsWith(mk+'-')).forEach(k=>delete S.days[k]);
   await Store.save(S); render(); toast(t('msg.saved'));
 };
 
 /* ── close ── */
-function openClose(){
-  const mk=mkey(view), worked=workedIn(mk), before=bankBefore(mk), c=S.closures[mk];
+function openInvoice(){
+  const mk=mkey(view), worked=workedIn(mk), before=bankBefore(mk);
+  const closed=isClosed(mk), m=S.months[mk], b=billedOf(mk);
   document.getElementById('closeIntro').textContent =
     `${mName(mk)} · ${t('close.worked')}: ${worked} · ${t('close.before')}: ${before}`;
-  document.getElementById('invDays').value = c ? c.billed : worked;
-  document.getElementById('closeInv').value = c ? (c.inv||'') : '';
-  document.getElementById('closeNote').value = c ? (c.note||'') : '';
-  document.getElementById('closeReopen').classList.toggle('hidden',!c);
-  document.getElementById('closeConfirm').textContent = c ? t('close.save') : t('close.confirm');
+  document.getElementById('invDays').value = b===null ? worked : b;
+  document.getElementById('closeInv').value = m ? (m.inv||'') : '';
+  document.getElementById('closeNote').value = m ? (m.note||'') : '';
+  document.getElementById('invReopen').classList.toggle('hidden', !closed);
+  document.getElementById('invLock').classList.toggle('hidden', closed);
+  document.getElementById('invOpenNote').textContent = closed ? '' : t('inv.openNote');
   updateCalc(); openSheet('sheetClose');
+}
+function readInv(){
+  let v=parseInt(document.getElementById('invDays').value,10);
+  return (isNaN(v)||v<0) ? 0 : v;
 }
 function updateCalc(){
   const mk=mkey(view), worked=workedIn(mk), before=bankBefore(mk);
-  let inv=parseInt(document.getElementById('invDays').value,10); if(isNaN(inv)||inv<0) inv=0;
-  const move=worked-inv, after=before+move, w=document.getElementById('closeWarn');
+  const inv=readInv(), move=worked-inv, after=before+move;
+  const w=document.getElementById('closeWarn');
   if(after<0){ w.classList.remove('hidden'); w.textContent=`${t('msg.short')} — ${worked+before}`; }
   else w.classList.add('hidden');
   const rate=Number(S.billing.rate)||0;
   document.getElementById('closeCalc').innerHTML=`
     <div><span>${t('close.before')}</span><b dir="ltr">${before}</b></div>
     <div><span>${t('close.worked')}</span><b dir="ltr">${worked}</b></div>
-    <div><span>${t('close.billed')}</span><b dir="ltr">−${inv}</b></div>
+    <div><span>${t('close.billed')}</span><b dir="ltr">-${inv}</b></div>
     <div class="tot"><span>${move>=0?t('close.toBank'):t('close.fromBank')}</span>
       <b dir="ltr" style="color:${move>0?'var(--mark)':move<0?'var(--draw)':'inherit'}">${move>0?'+':''}${move}</b></div>
     <div class="tot"><span>${t('close.after')}</span><b dir="ltr">${after}</b></div>
@@ -774,26 +842,61 @@ function updateCalc(){
 document.getElementById('invDays').oninput=updateCalc;
 document.getElementById('invMinus').onclick=()=>{const i=document.getElementById('invDays');i.value=Math.max(0,(+i.value||0)-1);updateCalc();};
 document.getElementById('invPlus').onclick=()=>{const i=document.getElementById('invDays');i.value=(+i.value||0)+1;updateCalc();};
-document.getElementById('btnClose').onclick=openClose;
-document.getElementById('closeConfirm').onclick=async()=>{
-  const mk=mkey(view);
-  let inv=parseInt(document.getElementById('invDays').value,10); if(isNaN(inv)||inv<0) inv=0;
-  if(bankBefore(mk)+workedIn(mk)-inv<0){ toast(t('msg.short')); return; }
-  const isNew=!S.closures[mk];
-  S.closures[mk]={billed:inv,inv:document.getElementById('closeInv').value.trim(),
-    note:document.getElementById('closeNote').value.trim(),closedAt:new Date().toISOString()};
+document.getElementById('btnClose').onclick=openInvoice;
+document.getElementById('tileBilled').onclick=openInvoice;
+
+async function saveInvoice(close){
+  const mk=mkey(view), inv=readInv();
+  if(close && bankBefore(mk)+workedIn(mk)-inv<0){ toast(t('msg.short')); return; }
+  const was=isClosed(mk);
+  S.months[mk]={
+    billed:inv,
+    inv:document.getElementById('closeInv').value.trim(),
+    note:document.getElementById('closeNote').value.trim(),
+    closed: close ? true : was,
+    closedAt: close ? new Date().toISOString() : (S.months[mk]&&S.months[mk].closedAt)||null
+  };
   await Store.save(S); closeSheets();
-  if(isNew){ view.setMonth(view.getMonth()+1); }
-  render(); toast(t('msg.closed'));
+  if(close && !was) view.setMonth(view.getMonth()+1);
+  render();
+  toast(close ? t('msg.closed') : t('msg.invSaved'));
+}
+document.getElementById('invSave').onclick=()=>saveInvoice(false);
+document.getElementById('invLock').onclick=()=>saveInvoice(true);
+document.getElementById('invReopen').onclick=async()=>{
+  const mk=mkey(view);
+  if(S.months[mk]) S.months[mk].closed=false;
+  await Store.save(S); closeSheets(); render(); toast(t('msg.reopened'));
 };
-document.getElementById('closeReopen').onclick=async()=>{
-  delete S.closures[mkey(view)]; await Store.save(S); closeSheets(); render(); toast(t('msg.reopened'));
+
+/* -- банк дней -- */
+function openBank(){
+  document.getElementById('bkDays').value = Number(S.bankStart)||0;
+  paintBank();
+  openSheet('sheetBank');
+}
+function paintBank(){
+  let v=parseInt(document.getElementById('bkDays').value,10); if(isNaN(v)) v=0;
+  const earned = bankNow() - (Number(S.bankStart)||0);
+  document.getElementById('bankCalc').innerHTML=`
+    <div><span>${t('bank.opening')}</span><b dir="ltr">${v}</b></div>
+    <div><span>${t('rep.hist')}</span><b dir="ltr">${earned>0?'+':''}${earned}</b></div>
+    <div class="tot"><span>${t('bank.now')}</span><b dir="ltr">${v+earned}</b></div>`;
+}
+document.getElementById('bkDays').oninput=paintBank;
+document.getElementById('bkMinus').onclick=()=>{const i=document.getElementById('bkDays');i.value=(+i.value||0)-1;paintBank();};
+document.getElementById('bkPlus').onclick=()=>{const i=document.getElementById('bkDays');i.value=(+i.value||0)+1;paintBank();};
+document.getElementById('tileBank').onclick=openBank;
+document.getElementById('resBig').onclick=openBank;
+document.getElementById('bankSave').onclick=async()=>{
+  S.bankStart=parseInt(document.getElementById('bkDays').value,10)||0;
+  await Store.save(S); closeSheets(); render(); toast(t('msg.bankSaved'));
 };
 
 /* ══════════ REPORT ══════════ */
 function reportData(){
-  const mk=mkey(view), c=S.closures[mk], worked=workedIn(mk), before=bankBefore(mk);
-  const billed=c?Number(c.billed):worked;
+  const mk=mkey(view), c=S.months[mk], worked=workedIn(mk), before=bankBefore(mk);
+  const b=billedOf(mk), billed = b===null ? worked : b;
   return {mk,c,worked,before,billed,move:worked-billed,after:before+worked-billed};
 }
 function buildReport(){
@@ -809,12 +912,12 @@ function buildReport(){
     <td class="num ${r.move>0?'pl':r.move<0?'mn':''}">${r.move>0?'+':''}${r.move}</td><td class="num">${r.after}</td></tr>`).join('');
   const now=new Date();
   const note = D.move>0
-    ? (L==='he' ? `בחשבונית נכללו ${D.billed} ${dayWord(D.billed)} מתוך ${D.worked} שנעבדו. היתרה — ${D.move} ${dayWord(D.move)} — נצברת לבנק הימים וניתן לחייב אותה בתקופות הבאות.`
+    ? (L==='he' ? `מתוך ${D.worked} ימי עבודה בתקופה, ${D.billed} נכללו בחשבונית. היתרה — ${D.move} ${dayWord(D.move)} — נצברת לבנק הימים וניתן לחייב אותה בתקופות הבאות.`
                 : `${D.billed} of ${D.worked} days worked are included in this invoice. The remaining ${D.move} ${dayWord(D.move)} are carried into the day bank and may be billed in a future period.`)
     : D.move<0
-    ? (L==='he' ? `נעבדו ${D.worked} ${dayWord(D.worked)} ובחשבונית נכללו ${D.billed}. ההפרש של ${Math.abs(D.move)} ${dayWord(Math.abs(D.move))} נמשך מבנק הימים שנצבר בתקופות קודמות.`
+    ? (L==='he' ? `בתקופה נרשמו ${D.worked} ימי עבודה, ומתוכם ${D.billed} נכללו בחשבונית. ההפרש — ${Math.abs(D.move)} ${dayWord(Math.abs(D.move))} — נמשך מבנק הימים שנצבר בתקופות קודמות.`
                 : `${D.worked} ${dayWord(D.worked)} were worked and ${D.billed} are billed. The difference of ${Math.abs(D.move)} ${dayWord(Math.abs(D.move))} is drawn from the day bank accumulated in previous periods.`)
-    : (L==='he' ? 'כל ימי העבודה בתקופה חויבו במלואם. בנק הימים לא השתנה.'
+    : (L==='he' ? 'כל ימי העבודה בתקופה נכללו בחשבונית במלואם. יתרת בנק הימים לא השתנתה.'
                 : 'All days worked in this period are billed in full. The day bank is unchanged.');
 
   document.getElementById('report').setAttribute('dir', L==='he'?'rtl':'ltr');
@@ -999,8 +1102,9 @@ document.getElementById('btnImpData').onclick=()=>document.getElementById('fileI
 document.getElementById('fileIn').onchange=async e=>{
   const f=e.target.files[0]; if(!f) return;
   try{ const o=JSON.parse(await f.text()); if(!o.days||!o.profile) throw 0;
-    S=Object.assign({v:2,lang:'en',weekStart:0,profile:{},client:{},billing:{rate:0,cur:'ILS'},bankStart:0,presets:null,defaults:{desc:'',place:''},days:{},closures:{}},o);
+    S=Object.assign({v:3,lang:'en',weekStart:0,profile:{},client:{},billing:{rate:0,cur:'ILS'},bankStart:0,presets:null,defaults:{desc:'',place:''},days:{},months:{}},o);
     S.defaults=Object.assign({desc:'',place:''},o.defaults||{});
+    migrate();
     L=S.lang||'en'; await Store.save(S); closeSheets(); applyLang(); render(); toast(t('msg.loaded'));
   }catch(err){ toast(t('msg.badfile')); }
   e.target.value='';
@@ -1013,6 +1117,7 @@ document.getElementById('fileIn').onchange=async e=>{
     client:Object.assign({},S.client,saved.client), billing:Object.assign({},S.billing,saved.billing),
     defaults:Object.assign({desc:'',place:''},saved.defaults)});
   else { const nav=(navigator.language||'').toLowerCase(); if(nav.startsWith('he')){ S.lang='he'; S.weekStart=0; } else S.weekStart=1; }
+  if(migrate()) await Store.save(S);
   L=S.lang||'en';
   applyLang(); render();
   if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
