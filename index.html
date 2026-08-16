@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WorkLog</title>
+<meta name="theme-color" content="#14213A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WorkLog">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<style>
+:root{
+  --paper:#ECEEF1; --card:#FFFFFF; --ink:#14213A; --soft:#5A6884;
+  --rule:#C9D2DC; --mark:#1F7A5C; --markw:#E4F0EA; --draw:#B4472E; --draww:#F7E7E2;
+  --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --num:ui-monospace,"SF Mono","Roboto Mono",Menlo,Consolas,monospace;
+  --r:5px;
+}
+html[lang="he"]{ --ui:-apple-system,BlinkMacSystemFont,"Segoe UI","Assistant","Heebo","Arial Hebrew",Arial,sans-serif; }
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--ui);font-size:16px;line-height:1.45;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding:14px 16px 130px}
+
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding:6px 0 14px}
+.eyebrow{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);font-weight:700}
+.brand{font-size:25px;line-height:1.05;margin:2px 0 0;font-weight:700;letter-spacing:-.01em}
+.topbtns{display:flex;gap:8px}
+.iconbtn{min-width:38px;height:38px;padding:0 10px;border:1px solid var(--rule);border-radius:var(--r);background:var(--card);
+  display:grid;place-items:center;font-size:15px;color:var(--soft);font-weight:600}
+.iconbtn:active{background:var(--paper)}
+.lang{font-size:12px;letter-spacing:.06em;font-weight:700}
+
+.card{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);margin-bottom:12px;overflow:hidden}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--rule)}
+.card-t{font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;font-weight:700;color:var(--soft)}
+.card-b{padding:14px}
+
+.mnav{display:flex;align-items:center;justify-content:space-between;padding:10px 8px}
+.mnav b{font-size:19px;font-weight:700}
+.mnav .iconbtn{border-color:transparent;background:none;font-size:20px}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-top:3px}
+.badge.closed{background:var(--markw);color:var(--mark)}
+.badge.open{background:#EDF0F3;color:var(--soft)}
+
+.figs{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--rule)}
+.fig{padding:12px 6px;text-align:center;border-inline-end:1px solid var(--rule)}
+.fig:last-child{border-inline-end:0}
+.fig b{display:block;font-size:29px;line-height:1;font-weight:700;font-variant-numeric:tabular-nums}
+.fig span{display:block;font-size:8.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--soft);font-weight:700;margin-top:7px}
+.fig.g b{color:var(--mark)}
+
+.stamp{width:100%;display:flex;align-items:center;justify-content:center;gap:12px;padding:20px 16px;
+  background:var(--ink);color:#fff;border-radius:var(--r);font-size:17px;font-weight:700;
+  transition:transform .12s ease,background .15s ease}
+.stamp:active{transform:scale(.985)}
+.stamp .mk{width:25px;height:25px;border:2px solid rgba(255,255,255,.45);border-radius:4px;display:grid;place-items:center;font-size:14px}
+.stamp.on{background:var(--mark)}
+.stamp.on .mk{border-color:#fff;background:#fff;color:var(--mark)}
+.stamp-note{text-align:center;font-size:12.5px;color:var(--soft);margin:8px 0 14px;min-height:18px}
+.stamp-note button{text-decoration:underline;text-underline-offset:3px;color:var(--ink);font-weight:600}
+
+.dow{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:6px}
+.dow span{text-align:center;font-size:10px;font-weight:700;color:var(--soft);letter-spacing:.04em}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cell{position:relative;aspect-ratio:1;border:1px solid var(--rule);border-radius:4px;background:var(--card);
+  display:grid;place-items:center;font-size:14px;font-variant-numeric:tabular-nums;transition:background .12s,color .12s}
+.cell.pad{border-color:transparent;background:none}
+.cell.we{color:var(--soft);background:#F6F8F9}
+.cell.on{background:var(--mark);border-color:var(--mark);color:#fff;font-weight:700}
+.cell.today::after{content:"";position:absolute;top:-3px;bottom:-3px;left:-3px;right:-3px;border:1.5px solid var(--ink);border-radius:6px}
+.cell .dot{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--soft)}
+.cell.on .dot{background:#fff}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:11px;color:var(--soft)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-inline-end:5px}
+.bulk{display:flex;gap:16px;margin-top:12px;font-size:12.5px}
+.bulk button{color:var(--soft);text-decoration:underline;text-underline-offset:3px}
+
+.tokens{display:flex;flex-wrap:wrap;gap:4px;min-height:15px;margin-bottom:2px}
+.tokens i{width:13px;height:13px;border-radius:2px;background:var(--mark);animation:pop .25s ease backwards}
+.tokens i.ghost{background:none;border:1.5px dashed var(--rule)}
+@keyframes pop{from{transform:scale(.3);opacity:0}}
+.res-row{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.res-big{font-size:38px;line-height:1;font-weight:700;font-variant-numeric:tabular-nums}
+.res-row span{font-size:12.5px;color:var(--soft)}
+.ledger{border-top:1px solid var(--rule);margin-top:14px}
+.lrow{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--rule);font-size:13.5px}
+.lrow:last-child{border-bottom:0}
+.lrow small{display:block;font-size:11px;color:var(--soft)}
+.mv{font-family:var(--num);font-size:13px;font-weight:700}
+.mv.plus{color:var(--mark)}.mv.minus{color:var(--draw)}.mv.zero{color:var(--soft)}
+.bal{font-family:var(--num);font-size:13px;color:var(--soft);min-width:34px;text-align:end}
+.empty{padding:14px 2px;font-size:13px;color:var(--soft);line-height:1.5}
+
+.btn{display:block;width:100%;padding:14px;border-radius:var(--r);border:1px solid var(--ink);
+  background:var(--card);font-weight:700;font-size:15px;text-align:center}
+.btn.primary{background:var(--ink);color:#fff}
+.btn.ghost{border-color:var(--rule);color:var(--soft);font-weight:600}
+.btn:active{opacity:.85}
+.btn+.btn{margin-top:8px}
+.btn[disabled]{opacity:.5}
+
+.veil{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(20,33,58,.42);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.veil.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--card);border-radius:14px 14px 0 0;
+  transform:translateY(101%);transition:transform .26s cubic-bezier(.32,.72,0,1);max-height:90vh;overflow-y:auto;
+  padding-bottom:calc(18px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
+.sheet.show{transform:none}
+@media(min-width:620px){
+  .sheet{max-width:540px;margin:0 auto;border-radius:12px;bottom:auto;top:50%;transform:translateY(-40%);opacity:0}
+  .sheet.show{transform:translateY(-50%);opacity:1}
+}
+.sheet-h{position:sticky;top:0;background:var(--card);display:flex;align-items:center;justify-content:space-between;
+  padding:16px;border-bottom:1px solid var(--rule);z-index:2}
+.sheet-h b{font-size:18px}
+.sheet-b{padding:16px}
+.grp{font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;font-weight:700;color:var(--soft);
+  margin:22px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--rule)}
+.grp:first-child{margin-top:0}
+label.f,div.f{display:block;margin-bottom:14px}
+label.f>span,div.f>span{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--soft);margin-bottom:6px}
+.f input,.f textarea,.f select{width:100%;padding:11px 12px;border:1px solid var(--rule);border-radius:var(--r);background:#FAFBFC}
+.f textarea{min-height:70px;resize:vertical}
+.hint{font-size:11.5px;color:var(--soft);margin-top:5px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stepper{display:flex;align-items:center;border:1px solid var(--rule);border-radius:var(--r);overflow:hidden}
+.stepper button{width:54px;height:52px;font-size:22px;background:#FAFBFC;color:var(--soft)}
+.stepper input{flex:1;text-align:center;border:0;border-inline-start:1px solid var(--rule);border-inline-end:1px solid var(--rule);
+  border-radius:0;font-size:24px;font-weight:700;background:var(--card);padding:10px 0}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+.chip{padding:8px 12px;border:1px solid var(--rule);border-radius:99px;font-size:13.5px;background:#FAFBFC}
+.chip.on{background:var(--markw);border-color:var(--mark);color:var(--mark);font-weight:700}
+.calc{background:#F6F8F9;border:1px solid var(--rule);border-radius:var(--r);padding:12px 14px;margin:2px 0 16px;font-size:13.5px}
+.calc div{display:flex;justify-content:space-between;gap:12px;padding:4px 0}
+.calc div.tot{border-top:1px solid var(--rule);margin-top:6px;padding-top:9px;font-weight:700}
+.calc b{font-family:var(--num);font-size:13px}
+.warn{background:var(--draww);color:var(--draw);border-radius:var(--r);padding:10px 12px;font-size:13px;margin-bottom:14px}
+.plist{margin-bottom:12px}
+.pitem{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--rule);font-size:14px}
+.pitem span{flex:1}
+.pitem button{color:var(--draw);font-size:17px;width:30px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);background:var(--ink);color:#fff;
+  padding:11px 18px;border-radius:99px;font-size:14px;z-index:80;opacity:0;pointer-events:none;transition:.22s;
+  max-width:90vw;display:flex;align-items:center;gap:16px}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tbtn{color:#8FD3BE;font-weight:700;text-decoration:underline;text-underline-offset:3px;flex:none}
+.linkbtn{display:block;margin:0 0 16px;font-size:12.5px;color:var(--soft);
+  text-decoration:underline;text-underline-offset:3px;padding:4px 0}
+.linkbtn.done{color:var(--mark);text-decoration:none;font-weight:700}
+.hidden{display:none!important}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;
+  border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px;margin-inline-end:8px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ═══ ОТЧЁТ ═══ */
+#reportHost{position:fixed;top:0;left:-20000px;width:794px;background:#fff;z-index:-1}
+#report{width:794px;background:#fff;color:#14213A;padding:46px 44px;font-family:var(--ui);line-height:1.45}
+#report *{box-sizing:border-box}
+.rp-top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #14213A;padding-bottom:12px}
+.rp-eye{font-size:9px;letter-spacing:.2em;text-transform:uppercase;font-weight:800;color:#5A6884}
+.rp-title{font-size:27px;line-height:1.1;margin:5px 0 0;font-weight:800;letter-spacing:-.01em}
+.rp-period{font-size:15px;color:#5A6884;margin-top:3px;font-weight:600}
+.rp-meta{text-align:end;font-size:10px;color:#5A6884;line-height:1.8}
+.rp-meta b{display:block;font-size:14px;color:#14213A;font-weight:700}
+.rp-parties{display:flex;gap:30px;margin:20px 0 22px}
+.rp-party{flex:1}
+.rp-lbl{font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:#5A6884;margin-bottom:4px}
+.rp-val{font-size:14px;font-weight:700}
+.rp-sub{font-size:11px;color:#5A6884;line-height:1.6}
+.rp-figs{display:flex;border:1.5px solid #14213A}
+.rp-fig{flex:1;padding:13px 8px;text-align:center;border-inline-end:1px solid #C9D2DC}
+.rp-fig:last-child{border-inline-end:0}
+.rp-fig b{display:block;font-size:28px;line-height:1;font-weight:800}
+.rp-fig span{display:block;font-size:8px;letter-spacing:.11em;text-transform:uppercase;font-weight:800;color:#5A6884;margin-top:7px}
+.rp-fig.acc b{color:#1F7A5C}
+.rp-h{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:#14213A;
+  border-bottom:1.5px solid #14213A;padding-bottom:6px;margin:26px 0 0}
+#report table{width:100%;border-collapse:collapse;font-size:12px}
+#report th{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:#5A6884;text-align:start;
+  padding:8px;border-bottom:1px solid #C9D2DC;font-weight:800}
+#report td{padding:7px 8px;border-bottom:1px solid #E6EAEE;vertical-align:top}
+#report tr:last-child td{border-bottom:0}
+.c-n{width:30px;color:#5A6884;font-family:var(--num);font-size:10px}
+.c-d{width:92px;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600}
+.c-w{width:56px;color:#5A6884}
+.num{text-align:end;font-family:var(--num);font-size:11px;white-space:nowrap}
+.pl{color:#1F7A5C}.mn{color:#B4472E}
+tr.total td{border-top:1.5px solid #14213A!important;border-bottom:0;font-weight:800;padding-top:10px}
+.rp-note{background:#F4F6F8;border-inline-start:3px solid #1F7A5C;padding:12px 14px;margin-top:16px;font-size:11.5px;line-height:1.6}
+.rp-sign{display:flex;justify-content:space-between;gap:44px;margin-top:38px}
+.rp-sign div{flex:1}
+.rp-line{border-bottom:1px solid #14213A;height:30px;margin-bottom:5px}
+.rp-foot{margin-top:26px;padding-top:9px;border-top:1px solid #C9D2DC;font-size:9px;color:#5A6884;display:flex;justify-content:space-between}
+
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  .wrap,.veil,.sheet,.toast{display:none!important}
+  #reportHost{position:static;left:0;width:auto}
+  #report{width:auto;padding:14mm 13mm}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="eyebrow" data-i18n="app.tag"></div>
+      <h1 class="brand" data-i18n="app.name"></h1>
+    </div>
+    <div class="topbtns">
+      <button class="iconbtn lang" id="btnLang" type="button" aria-label="Language / שפה">עב</button>
+      <button class="iconbtn" id="btnSet" type="button" aria-label="Settings">⚙</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="mnav">
+      <button class="iconbtn" id="prevM" type="button" aria-label="Previous month">‹</button>
+      <div style="text-align:center">
+        <b id="mTitle">—</b>
+        <div id="mState"></div>
+      </div>
+      <button class="iconbtn" id="nextM" type="button" aria-label="Next month">›</button>
+    </div>
+    <div class="figs">
+      <div class="fig"><b id="fWorked">0</b><span data-i18n="sum.worked"></span></div>
+      <div class="fig"><b id="fBilled">—</b><span data-i18n="sum.billed"></span></div>
+      <div class="fig g"><b id="fBank">0</b><span data-i18n="sum.bank"></span></div>
+    </div>
+  </div>
+
+  <div id="stampWrap">
+    <button class="stamp" id="btnStamp"><span class="mk" id="stampMark"></span><span id="stampText"></span></button>
+    <div class="stamp-note" id="stampNote"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">
+      <span class="card-t" data-i18n="cal.title"></span>
+      <span class="card-t" style="letter-spacing:0;text-transform:none;font-weight:500" data-i18n="cal.hint"></span>
+    </div>
+    <div class="card-b">
+      <div class="dow" id="dow"></div>
+      <div class="grid" id="grid"></div>
+      <div class="legend">
+        <span><i style="background:var(--mark)"></i><span data-i18n="cal.lg1"></span></span>
+        <span><i style="background:var(--soft)"></i><span data-i18n="cal.lg2"></span></span>
+      </div>
+      <div class="bulk">
+        <button id="fillMonth" data-i18n="cal.fill"></button>
+        <button id="clearMonth" data-i18n="cal.clear"></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><span class="card-t" data-i18n="res.title"></span></div>
+    <div class="card-b">
+      <div class="res-row"><div class="res-big" id="resBig">0</div><span id="resWord"></span></div>
+      <div class="tokens" id="tokens"></div>
+      <div class="ledger" id="ledger"></div>
+    </div>
+  </div>
+
+  <button class="btn primary" id="btnClose"></button>
+  <button class="btn" id="btnExport"></button>
+</div>
+
+<div class="veil" id="veil"></div>
+
+<!-- День -->
+<div class="sheet" id="sheetDay">
+  <div class="sheet-h"><b id="dayTitle"></b><button class="iconbtn" data-close type="button" aria-label="Close">✕</button></div>
+  <div class="sheet-b">
+    <div class="grp" style="margin-top:0" data-i18n="day.presets"></div>
+    <div class="chips" id="dayChips"></div>
+    <label class="f"><span data-i18n="day.what"></span><textarea id="dayNote"></textarea></label>
+    <label class="f" style="margin-bottom:6px"><span data-i18n="day.place"></span><input id="dayPlace" autocomplete="off"></label>
+    <button class="linkbtn" id="daySetDefault" type="button" data-i18n="day.setDefault"></button>
+    <button class="btn ghost hidden" id="dayRepeat" style="margin-bottom:8px"></button>
+    <button class="btn primary" id="daySave"></button>
+    <button class="btn ghost" id="dayRemove" style="border-color:var(--draww);color:var(--draw)"></button>
+  </div>
+</div>
+
+<!-- Закрытие -->
+<div class="sheet" id="sheetClose">
+  <div class="sheet-h"><b data-i18n="close.title"></b><button class="iconbtn" data-close type="button" aria-label="Close">✕</button></div>
+  <div class="sheet-b">
+    <p style="margin:0 0 16px;font-size:14px;color:var(--soft)" id="closeIntro"></p>
+    <div class="f" style="margin-bottom:14px"><span id="lblDays" data-i18n="close.days"></span>
+      <div class="stepper">
+        <button id="invMinus" type="button" aria-label="−1">−</button>
+        <input id="invDays" type="number" inputmode="numeric" min="0" aria-labelledby="lblDays">
+        <button id="invPlus" type="button" aria-label="+1">+</button>
+      </div>
+      <div class="hint" data-i18n="close.daysHint"></div></div>
+    <div class="warn hidden" id="closeWarn"></div>
+    <div class="calc" id="closeCalc"></div>
+    <label class="f"><span data-i18n="close.invNo"></span><input id="closeInv" autocomplete="off"></label>
+    <label class="f"><span data-i18n="close.note"></span><input id="closeNote" autocomplete="off"></label>
+    <button class="btn primary" id="closeConfirm"></button>
+    <button class="btn ghost hidden" id="closeReopen"></button>
+  </div>
+</div>
+
+<!-- Настройки -->
+<div class="sheet" id="sheetSet">
+  <div class="sheet-h"><b data-i18n="set.title"></b><button class="iconbtn" data-close type="button" aria-label="Close">✕</button></div>
+  <div class="sheet-b">
+    <div class="grp" data-i18n="set.langG"></div>
+    <div class="two">
+      <button class="btn" id="langEn">English</button>
+      <button class="btn" id="langHe">עברית</button>
+    </div>
+    <div class="grp" data-i18n="set.you"></div>
+    <label class="f"><span data-i18n="set.name"></span><input id="sName" autocomplete="off"></label>
+    <label class="f"><span data-i18n="set.biz"></span><input id="sBiz" autocomplete="off"></label>
+    <div class="two">
+      <label class="f"><span data-i18n="set.phone"></span><input id="sPhone" type="tel" autocomplete="off"></label>
+      <label class="f"><span data-i18n="set.email"></span><input id="sEmail" type="email" autocomplete="off"></label>
+    </div>
+    <label class="f"><span data-i18n="set.address"></span><input id="sAddr" autocomplete="off"></label>
+
+    <div class="grp" data-i18n="set.clientG"></div>
+    <label class="f"><span data-i18n="set.clientName"></span><input id="cName" autocomplete="off"></label>
+    <label class="f"><span data-i18n="set.clientContact"></span><input id="cContact" autocomplete="off"></label>
+    <div class="two">
+      <label class="f"><span data-i18n="set.clientEmail"></span><input id="cEmail" type="email" autocomplete="off"></label>
+      <label class="f"><span data-i18n="set.clientPhone"></span><input id="cPhone" type="tel" autocomplete="off"></label>
+    </div>
+
+    <div class="grp" data-i18n="set.billing"></div>
+    <div class="two">
+      <label class="f"><span data-i18n="set.rate"></span><input id="sRate" type="number" inputmode="decimal" min="0"></label>
+      <label class="f"><span data-i18n="set.currency"></span>
+        <select id="sCur"><option value="ILS">₪ ILS</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option><option value="GBP">£ GBP</option></select></label>
+    </div>
+    <div class="two">
+      <label class="f"><span data-i18n="set.bankStart"></span><input id="sStart" type="number" inputmode="numeric"></label>
+      <label class="f"><span data-i18n="set.weekStart"></span>
+        <select id="sWeek"><option value="0" data-i18n="set.sun"></option><option value="1" data-i18n="set.mon"></option></select></label>
+    </div>
+
+    <div class="grp" data-i18n="set.defG"></div>
+    <label class="f"><span data-i18n="set.defDesc"></span><select id="dDesc"></select></label>
+    <label class="f"><span data-i18n="set.defPlace"></span><input id="dPlace" autocomplete="off">
+      <div class="hint" data-i18n="set.defHint"></div></label>
+
+    <div class="grp" data-i18n="set.presets"></div>
+    <div class="plist" id="presetList"></div>
+    <div style="display:flex;gap:8px">
+      <input id="newPreset" style="flex:1;padding:11px 12px;border:1px solid var(--rule);border-radius:var(--r);background:#FAFBFC" autocomplete="off">
+      <button class="btn" id="addPreset" style="width:auto;padding:11px 18px">+</button>
+    </div>
+
+    <div class="grp" data-i18n="set.backupG"></div>
+    <button class="btn ghost" id="btnExpData"></button>
+    <button class="btn ghost" id="btnImpData"></button>
+    <input type="file" id="fileIn" accept="application/json" class="hidden">
+    <p class="hint" id="installHelp" style="margin-top:18px;line-height:1.6"></p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="reportHost"><div id="report"></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+/* ══════════ I18N ══════════ */
+const I18N = {
+en:{
+ 'app.name':'WorkLog','app.tag':'Workday log',
+ 'sum.worked':'Days worked','sum.billed':'On invoice','sum.bank':'Day bank',
+ 'st.open':'Open','st.closed':'Closed',
+ 'stamp.mark':'Log today','stamp.marked':'Today is logged','stamp.add':'Add a description',
+ 'stamp.other':'You are viewing another month.','stamp.back':'Back to current month',
+ 'cal.title':'Month log','cal.hint':'tap a day','cal.lg1':'workday','cal.lg2':'has description',
+ 'cal.fill':'Log all business days','cal.clear':'Clear this month',
+ 'res.title':'Day bank','res.avail':'days available',
+ 'res.empty':'No month has been closed yet. Log your days, then close the month — the difference between days worked and days invoiced is banked here.',
+ 'btn.close':'Close month','btn.closeEdit':'Edit month closing','btn.export':'Export PDF report',
+ 'day.marked':'Workday','day.presets':'What you did','day.what':'Description','day.place':'Location',
+ 'day.save':'Save','day.repeat':'Copy previous workday','day.remove':'Remove this workday','day.tapEdit':'tap again to edit',
+ 'day.setDefault':'Use this as my default',
+ 'close.title':'Close month','close.days':'Days on invoice',
+ 'close.daysHint':'How many days you are billing the client for this month',
+ 'close.invNo':'Invoice number','close.note':'Note for the report',
+ 'close.before':'Bank at start','close.worked':'Days worked','close.billed':'Billed on invoice',
+ 'close.toBank':'Added to bank','close.fromBank':'Taken from bank','close.after':'Bank at end',
+ 'close.confirm':'Close month','close.save':'Save changes','close.reopen':'Reopen this month',
+ 'exp.building':'Preparing PDF…',
+ 'set.title':'Settings','set.langG':'Language','set.you':'Your details','set.name':'Full name','set.biz':'Business / VAT ID',
+ 'set.phone':'Phone','set.email':'Email','set.address':'Address',
+ 'set.clientG':'Client','set.clientName':'Client name','set.clientContact':'Contact person','set.clientEmail':'Client email','set.clientPhone':'WhatsApp / phone',
+ 'set.billing':'Billing','set.rate':'Day rate','set.currency':'Currency','set.bankStart':'Opening day bank','set.weekStart':'Week starts on',
+ 'set.sun':'Sunday','set.mon':'Monday','set.presets':'Your work descriptions','set.backupG':'Backup',
+ 'set.defG':'Default entry','set.defDesc':'Default description','set.defPlace':'Default location','set.none':'— none —',
+ 'set.defHint':'Applied automatically when you log a day. You can change it on any individual day.',
+ 'set.expData':'Save backup file','set.impData':'Restore from backup',
+ 'set.install':'Data is stored on this device. Make a backup once a month.\nInstall: iPhone — Share → Add to Home Screen. Android — menu → Install app. Desktop — install icon in the address bar.',
+ 'rep.eye':'Attachment to invoice','rep.title':'Workday Report','rep.issued':'Issued','rep.invoice':'Invoice',
+ 'rep.contractor':'Contractor','rep.client':'Client',
+ 'rep.worked':'Days worked','rep.billed':'Days billed','rep.move':'Bank movement','rep.balance':'Bank balance',
+ 'rep.days':'Logged days','rep.no':'#','rep.date':'Date','rep.day':'Day','rep.place':'Location','rep.desc':'Description',
+ 'rep.nodays':'No days logged for this period',
+ 'rep.bank':'Day bank movement','rep.opening':'Balance carried forward','rep.added':'Days worked this period',
+ 'rep.out':'Days billed this period','rep.closing':'Balance carried to next period',
+ 'rep.billing':'Billing summary','rep.rate':'Day rate','rep.qty':'Days billed','rep.total':'Total','rep.vat':'Amount excludes VAT',
+ 'rep.hist':'Previous periods','rep.period':'Period','rep.hw':'Worked','rep.hb':'Billed','rep.hm':'Movement','rep.hbal':'Balance',
+ 'rep.sigC':'Contractor signature','rep.sigK':'Client approval','rep.foot':'Workday report · attachment to invoice',
+ 'msg.logged':'Logged','msg.unlogged':'Day removed','msg.saved':'Saved','msg.closed':'Month closed','msg.reopened':'Month reopened',
+ 'msg.undo':'Undo','msg.pdfReady':'PDF saved to your device','msg.defSaved':'Saved as your default',
+ 'msg.short':'Not enough days available','msg.noshare':'Sharing is not supported here — the file was saved instead',
+ 'msg.badfile':'That file does not match this app','msg.copied':'Backup saved','msg.loaded':'Data restored','msg.err':'Could not build the PDF. Check your connection and try again.',
+ 'msg.confirmClear':'Clear all logged days in this month?','msg.closedLock':'This month is closed. Reopen it to make changes.',
+ 'sh.text':'Workday report'
+},
+he:{
+ 'app.name':'יומן עבודה','app.tag':'מעקב ימי עבודה',
+ 'sum.worked':'ימי עבודה','sum.billed':'בחשבונית','sum.bank':'בנק ימים',
+ 'st.open':'פתוח','st.closed':'סגור',
+ 'stamp.mark':'סמן את היום','stamp.marked':'היום סומן','stamp.add':'הוסף תיאור',
+ 'stamp.other':'אתה צופה בחודש אחר.','stamp.back':'חזרה לחודש הנוכחי',
+ 'cal.title':'יומן החודש','cal.hint':'הקש על יום','cal.lg1':'יום עבודה','cal.lg2':'קיים תיאור',
+ 'cal.fill':'סמן את כל ימי החול','cal.clear':'נקה את החודש',
+ 'res.title':'בנק הימים','res.avail':'ימים זמינים',
+ 'res.empty':'עדיין לא נסגר אף חודש. סמן ימי עבודה ולחץ «סגור חודש» — ההפרש בין הימים שעבדת לימים שחויבו ייצבר כאן.',
+ 'btn.close':'סגור חודש','btn.closeEdit':'ערוך סגירת חודש','btn.export':'ייצוא דוח PDF',
+ 'day.marked':'יום עבודה','day.presets':'מה בוצע','day.what':'תיאור','day.place':'מיקום',
+ 'day.save':'שמור','day.repeat':'העתק מיום העבודה הקודם','day.remove':'הסר את יום העבודה','day.tapEdit':'הקש שוב לעריכה',
+ 'day.setDefault':'קבע כברירת המחדל שלי',
+ 'close.title':'סגירת חודש','close.days':'ימים בחשבונית',
+ 'close.daysHint':'כמה ימים אתה מחייב את הלקוח עבור החודש הזה',
+ 'close.invNo':'מספר חשבונית','close.note':'הערה לדוח',
+ 'close.before':'יתרת פתיחה','close.worked':'ימי עבודה','close.billed':'חויב בחשבונית',
+ 'close.toBank':'נצבר לבנק','close.fromBank':'נמשך מהבנק','close.after':'יתרת סגירה',
+ 'close.confirm':'סגור חודש','close.save':'שמור שינויים','close.reopen':'פתח את החודש מחדש',
+ 'exp.building':'מכין PDF…',
+ 'set.title':'הגדרות','set.langG':'שפה','set.you':'הפרטים שלך','set.name':'שם מלא','set.biz':'ח.פ / ע.מ',
+ 'set.phone':'טלפון','set.email':'אימייל','set.address':'כתובת',
+ 'set.clientG':'לקוח','set.clientName':'שם הלקוח','set.clientContact':'איש קשר','set.clientEmail':'אימייל הלקוח','set.clientPhone':'וואטסאפ / טלפון',
+ 'set.billing':'חיוב','set.rate':'תעריף יומי','set.currency':'מטבע','set.bankStart':'יתרת פתיחה בבנק','set.weekStart':'תחילת שבוע',
+ 'set.sun':'ראשון','set.mon':'שני','set.presets':'רשימת התיאורים שלך','set.backupG':'גיבוי',
+ 'set.defG':'ברירת מחדל לרישום','set.defDesc':'תיאור ברירת מחדל','set.defPlace':'מיקום ברירת מחדל','set.none':'— ללא —',
+ 'set.defHint':'ייכנס אוטומטית בכל יום שתסמן. תמיד אפשר לשנות ביום מסוים.',
+ 'set.expData':'שמור קובץ גיבוי','set.impData':'שחזור מגיבוי',
+ 'set.install':'הנתונים נשמרים במכשיר הזה. מומלץ לגבות פעם בחודש.\nהתקנה: אייפון — שיתוף ← הוסף למסך הבית. אנדרואיד — תפריט ← התקן אפליקציה. מחשב — סמל ההתקנה בשורת הכתובת.',
+ 'rep.eye':'נספח לחשבונית','rep.title':'דוח ימי עבודה','rep.issued':'תאריך הפקה','rep.invoice':'חשבונית',
+ 'rep.contractor':'נותן השירות','rep.client':'הלקוח',
+ 'rep.worked':'ימי עבודה','rep.billed':'ימים לחיוב','rep.move':'תנועה בבנק','rep.balance':'יתרת בנק',
+ 'rep.days':'פירוט ימי העבודה','rep.no':'#','rep.date':'תאריך','rep.day':'יום','rep.place':'מיקום','rep.desc':'תיאור',
+ 'rep.nodays':'לא נרשמו ימים בתקופה זו',
+ 'rep.bank':'תנועת בנק הימים','rep.opening':'יתרה מתקופה קודמת','rep.added':'ימים שנעבדו בתקופה',
+ 'rep.out':'ימים שחויבו בתקופה','rep.closing':'יתרה להעברה לתקופה הבאה',
+ 'rep.billing':'סיכום חיוב','rep.rate':'תעריף יומי','rep.qty':'ימים לחיוב','rep.total':'סה״כ','rep.vat':'הסכום אינו כולל מע״מ',
+ 'rep.hist':'תקופות קודמות','rep.period':'תקופה','rep.hw':'נעבד','rep.hb':'חויב','rep.hm':'תנועה','rep.hbal':'יתרה',
+ 'rep.sigC':'חתימת נותן השירות','rep.sigK':'אישור הלקוח','rep.foot':'דוח ימי עבודה · נספח לחשבונית',
+ 'msg.logged':'נרשם','msg.unlogged':'היום הוסר','msg.saved':'נשמר','msg.closed':'החודש נסגר','msg.reopened':'החודש נפתח מחדש',
+ 'msg.undo':'ביטול','msg.pdfReady':'ה‑PDF נשמר במכשיר','msg.defSaved':'נשמר כברירת המחדל שלך',
+ 'msg.short':'אין מספיק ימים זמינים','msg.noshare':'שיתוף אינו נתמך כאן — הקובץ נשמר במקום',
+ 'msg.badfile':'הקובץ אינו מתאים לאפליקציה','msg.copied':'הגיבוי נשמר','msg.loaded':'הנתונים שוחזרו','msg.err':'לא ניתן להפיק PDF. בדוק את החיבור ונסה שוב.',
+ 'msg.confirmClear':'למחוק את כל הימים המסומנים בחודש זה?','msg.closedLock':'החודש סגור. פתח אותו מחדש כדי לערוך.',
+ 'sh.text':'דוח ימי עבודה'
+}};
+const MON = {
+  en:['January','February','March','April','May','June','July','August','September','October','November','December'],
+  he:['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר']};
+const DOWF = {
+  en:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+  he:['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת']};
+const DOWS = {
+  en:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+  he:['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳']};
+const DEF_PRESETS = {
+  en:['Development work','Client meeting','On-site work','Remote work','Consulting','Support & maintenance','Design work','Documentation','Travel day','Training'],
+  he:['עבודת פיתוח','פגישת לקוח','עבודה באתר הלקוח','עבודה מרחוק','ייעוץ','תמיכה ותחזוקה','עיצוב','תיעוד','יום נסיעות','הדרכה']};
+const CUR = {ILS:'₪',USD:'$',EUR:'€',GBP:'£'};
+
+let L = 'en';
+const t = k => (I18N[L][k] !== undefined ? I18N[L][k] : k);
+const dayWord = n => L==='he' ? (n===1?'יום':'ימים') : (n===1?'day':'days');
+
+/* ══════════ STORAGE ══════════ */
+const KEY='worklog.v2';
+const cloud = typeof window.storage==='object' && window.storage && typeof window.storage.get==='function';
+const Store={
+  async load(){ try{
+    if(cloud){ const r=await window.storage.get(KEY); return r&&r.value?JSON.parse(r.value):null; }
+    const raw=localStorage.getItem(KEY); return raw?JSON.parse(raw):null;
+  }catch(e){ return null; } },
+  async save(o){ const s=JSON.stringify(o);
+    try{ if(cloud) await window.storage.set(KEY,s); else localStorage.setItem(KEY,s); }catch(e){ console.error(e); } }
+};
+
+/* ══════════ STATE ══════════ */
+let S = { v:2, lang:'en', weekStart:0,
+  profile:{name:'',biz:'',phone:'',email:'',addr:''},
+  client:{name:'',contact:'',email:'',phone:''},
+  billing:{rate:0,cur:'ILS'},
+  bankStart:0, presets:null, defaults:{desc:'',place:''}, days:{}, closures:{} };
+let view = new Date(); view.setDate(1);
+let editKey = null, lastPdf = null;
+
+const p2 = n => String(n).padStart(2,'0');
+const dkey = d => `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+const mkey = d => `${d.getFullYear()}-${p2(d.getMonth()+1)}`;
+const mName = k => `${MON[L][+k.slice(5,7)-1]} ${k.slice(0,4)}`;
+const fmtDate = k => { const [y,m,d]=k.split('-'); return L==='he' ? `${d}/${m}/${y}` : `${d} ${MON.en[+m-1].slice(0,3)} ${y}`; };
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => (CUR[S.billing.cur]||'') + ' ' + Number(n||0).toLocaleString(L==='he'?'he-IL':'en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
+const presets = () => (S.presets && S.presets.length) ? S.presets : DEF_PRESETS[L];
+const weekendDays = () => S.weekStart===0 ? [5,6] : [0,6];
+
+/* ══════════ CALC ══════════ */
+const workedIn = mk => Object.keys(S.days).filter(k=>k.startsWith(mk+'-') && S.days[k] && S.days[k].w).length;
+function chain(){
+  let bal = Number(S.bankStart)||0; const rows=[];
+  for(const k of Object.keys(S.closures).sort()){
+    const c=S.closures[k], w=workedIn(k), inv=Number(c.billed)||0;
+    const r={mk:k,before:bal,worked:w,billed:inv,move:w-inv,after:bal+w-inv,inv:c.inv||'',note:c.note||''};
+    bal=r.after; rows.push(r);
+  } return rows;
+}
+const bankBefore = mk => { const r=chain().filter(x=>x.mk<mk); return r.length?r[r.length-1].after:(Number(S.bankStart)||0); };
+const bankNow = () => { const r=chain(); return r.length?r[r.length-1].after:(Number(S.bankStart)||0); };
+
+/* ══════════ LANG ══════════ */
+function applyLang(){
+  document.documentElement.lang = L;
+  document.documentElement.dir = L==='he' ? 'rtl' : 'ltr';
+  document.title = t('app.name');
+  document.querySelectorAll('[data-i18n]').forEach(e => e.textContent = t(e.dataset.i18n));
+  document.getElementById('btnLang').textContent = L==='en' ? 'עב' : 'EN';
+  document.getElementById('btnClose').textContent = t('btn.close');
+  document.getElementById('btnExport').textContent = t('btn.export');
+  document.getElementById('daySave').textContent = t('day.save');
+  document.getElementById('dayRepeat').textContent = t('day.repeat');
+  document.getElementById('dayRemove').textContent = t('day.remove');
+  document.getElementById('closeConfirm').textContent = t('close.confirm');
+  document.getElementById('closeReopen').textContent = t('close.reopen');
+  document.getElementById('btnExpData').textContent = t('set.expData');
+  document.getElementById('btnImpData').textContent = t('set.impData');
+  document.getElementById('installHelp').textContent = t('set.install');
+  document.getElementById('newPreset').placeholder = t('day.what');
+  document.getElementById('langEn').className = 'btn' + (L==='en'?' primary':'');
+  document.getElementById('langHe').className = 'btn' + (L==='he'?' primary':'');
+  const dow = document.getElementById('dow'); dow.innerHTML='';
+  for(let i=0;i<7;i++){ const d=(S.weekStart+i)%7; const s=document.createElement('span'); s.textContent=DOWS[L][d]; dow.appendChild(s); }
+}
+
+/* ══════════ RENDER ══════════ */
+function render(){
+  const mk = mkey(view), c = S.closures[mk], worked = workedIn(mk), before = bankBefore(mk);
+  document.getElementById('mTitle').textContent = mName(mk);
+  document.getElementById('mState').innerHTML = c
+    ? `<span class="badge closed">${t('st.closed')}</span>` : `<span class="badge open">${t('st.open')}</span>`;
+  document.getElementById('fWorked').textContent = worked;
+  document.getElementById('fBilled').textContent = c ? c.billed : '—';
+  document.getElementById('fBank').textContent = c ? (before + worked - c.billed) : before;
+  const bc = document.getElementById('btnClose');
+  bc.textContent = c ? t('btn.closeEdit') : t('btn.close');
+  bc.className = c ? 'btn' : 'btn primary';
+  document.getElementById('btnExport').className = c ? 'btn primary' : 'btn';
+  renderStamp(); renderGrid(); renderBank();
+}
+function renderStamp(){
+  const today=new Date(), tk=dkey(today), same = mkey(today)===mkey(view);
+  const btn=document.getElementById('btnStamp'), note=document.getElementById('stampNote');
+  if(!same){
+    btn.classList.add('hidden');
+    note.innerHTML = `${t('stamp.other')} <button id="goToday">${t('stamp.back')}</button>`;
+    document.getElementById('goToday').onclick=()=>{ view=new Date(); view.setDate(1); render(); };
+    return;
+  }
+  btn.classList.remove('hidden');
+  const on = !!(S.days[tk] && S.days[tk].w);
+  btn.classList.toggle('on',on);
+  document.getElementById('stampMark').textContent = on?'✓':'';
+  document.getElementById('stampText').textContent = on ? t('stamp.marked') : t('stamp.mark');
+  const d=S.days[tk]||{}, extra=[d.n,d.p].filter(Boolean).join(' · ');
+  note.textContent = on
+    ? (extra ? `${extra} · ${t('day.tapEdit')}` : t('day.tapEdit'))
+    : `${fmtDate(tk)} · ${DOWF[L][today.getDay()]}`;
+}
+function renderGrid(){
+  const g=document.getElementById('grid'); g.innerHTML='';
+  const y=view.getFullYear(), m=view.getMonth();
+  const lead=(new Date(y,m,1).getDay()-S.weekStart+7)%7;
+  const total=new Date(y,m+1,0).getDate(), tk=dkey(new Date()), we=weekendDays();
+  for(let i=0;i<lead;i++){ const e=document.createElement('div'); e.className='cell pad'; g.appendChild(e); }
+  for(let d=1;d<=total;d++){
+    const key=`${y}-${p2(m+1)}-${p2(d)}`, dt=new Date(y,m,d), rec=S.days[key];
+    const b=document.createElement('button'); b.className='cell';
+    if(we.includes(dt.getDay())) b.classList.add('we');
+    if(rec&&rec.w) b.classList.add('on');
+    if(key===tk) b.classList.add('today');
+    b.innerHTML = d + ((rec&&(rec.n||rec.p))?'<i class="dot"></i>':'');
+    b.onclick=()=>dayTap(key);
+    g.appendChild(b);
+  }
+}
+function renderBank(){
+  const bal=bankNow();
+  document.getElementById('resBig').textContent=bal;
+  document.getElementById('resWord').textContent=`${dayWord(bal)} · ${t('res.avail')}`;
+  const tk=document.getElementById('tokens'); tk.innerHTML='';
+  if(bal>0){
+    for(let i=0;i<Math.min(bal,60);i++){ const e=document.createElement('i'); e.style.animationDelay=(i*13)+'ms'; tk.appendChild(e); }
+    if(bal>60){ const s=document.createElement('span'); s.style.cssText='font-size:11px;color:var(--soft);align-self:center'; s.textContent='+'+(bal-60); tk.appendChild(s); }
+  } else { for(let i=0;i<6;i++){ const e=document.createElement('i'); e.className='ghost'; tk.appendChild(e); } }
+  const rows=chain().slice().reverse(), L2=document.getElementById('ledger');
+  if(!rows.length){ L2.innerHTML=`<div class="empty">${t('res.empty')}</div>`; return; }
+  L2.innerHTML = rows.map(r=>{
+    const cls=r.move>0?'plus':r.move<0?'minus':'zero';
+    return `<div class="lrow"><div>${mName(r.mk)}<small>${t('rep.hw')} ${r.worked} · ${t('rep.hb')} ${r.billed}</small></div>
+      <div class="mv ${cls}" dir="ltr">${r.move>0?'+':''}${r.move}</div><div class="bal" dir="ltr">${r.after}</div></div>`;
+  }).join('');
+}
+
+/* ══════════ SHEETS ══════════ */
+const veil=document.getElementById('veil');
+const openSheet=id=>{ document.getElementById(id).classList.add('show'); veil.classList.add('show'); };
+const closeSheets=()=>{ document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('show')); veil.classList.remove('show'); };
+veil.onclick=closeSheets;
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheets);
+function toast(m,action){
+  const e=document.getElementById('toast'); e.innerHTML='';
+  const s=document.createElement('span'); s.textContent=m; e.appendChild(s);
+  if(action){ const b=document.createElement('button'); b.className='tbtn'; b.textContent=action.label;
+    b.onclick=()=>{ e.classList.remove('show'); action.fn(); }; e.appendChild(b); }
+  e.classList.add('show');
+  clearTimeout(e._t); e._t=setTimeout(()=>e.classList.remove('show'), action?5200:2400);
+}
+
+/* ── day ── */
+function lastWorkday(before){
+  const ks=Object.keys(S.days).filter(k=>S.days[k].w && k<before).sort();
+  return ks.length?S.days[ks[ks.length-1]]:null;
+}
+function dayTap(key){
+  if(S.closures[mkey(view)]){ toast(t('msg.closedLock')); return; }
+  const r=S.days[key];
+  if(r && r.w) openDay(key); else quickLog(key);
+}
+async function quickLog(key){
+  const prev = S.days[key] ? JSON.parse(JSON.stringify(S.days[key])) : null;
+  S.days[key] = { w:1, n:(S.defaults.desc||''), p:(S.defaults.place||'') };
+  await Store.save(S); render();
+  const label = S.defaults.desc ? `${t('msg.logged')} · ${S.defaults.desc}` : `${t('msg.logged')} · ${t('day.tapEdit')}`;
+  toast(label, { label:t('msg.undo'), fn:async()=>{
+    if(prev) S.days[key]=prev; else delete S.days[key];
+    await Store.save(S); render();
+  }});
+}
+function openDay(key){
+  if(S.closures[mkey(view)]){ toast(t('msg.closedLock')); return; }
+  editKey=key;
+  const [y,m,d]=key.split('-').map(Number), dt=new Date(y,m-1,d), rec=S.days[key]||{};
+  document.getElementById('dayTitle').textContent=`${fmtDate(key)} \u00b7 ${DOWF[L][dt.getDay()]}`;
+  document.getElementById('dayNote').value = rec.n!==undefined ? rec.n : (S.defaults.desc||'');
+  document.getElementById('dayPlace').value = rec.p!==undefined ? rec.p : (S.defaults.place||'');
+  const chips=document.getElementById('dayChips'); chips.innerHTML='';
+  const cur=document.getElementById('dayNote');
+  presets().forEach(p=>{
+    const b=document.createElement('button'); b.className='chip'; b.textContent=p;
+    b.onclick=()=>{
+      const parts=cur.value.split(', ').map(s=>s.trim()).filter(Boolean);
+      const i=parts.indexOf(p);
+      if(i>=0) parts.splice(i,1); else parts.push(p);
+      cur.value=parts.join(', '); syncChips();
+    };
+    chips.appendChild(b);
+  });
+  syncChips();
+  const sd=document.getElementById('daySetDefault');
+  sd.classList.remove('done'); sd.textContent=t('day.setDefault');
+  const lw=lastWorkday(key), rb=document.getElementById('dayRepeat');
+  rb.classList.toggle('hidden', !lw);
+  if(lw) rb.onclick=()=>{
+    document.getElementById('dayNote').value=lw.n||'';
+    document.getElementById('dayPlace').value=lw.p||'';
+    syncChips();
+  };
+  openSheet('sheetDay');
+}
+function syncChips(){
+  const v=document.getElementById('dayNote').value.split(', ').map(s=>s.trim());
+  document.querySelectorAll('#dayChips .chip').forEach(c=>c.classList.toggle('on', v.includes(c.textContent)));
+}
+document.getElementById('dayNote').oninput=syncChips;
+document.getElementById('daySave').onclick=async()=>{
+  const n=document.getElementById('dayNote').value.trim(), p=document.getElementById('dayPlace').value.trim();
+  S.days[editKey]={w:1,n,p};
+  await Store.save(S); closeSheets(); render(); toast(t('msg.saved'));
+};
+document.getElementById('dayRemove').onclick=async()=>{
+  const prev = S.days[editKey] ? JSON.parse(JSON.stringify(S.days[editKey])) : null;
+  delete S.days[editKey];
+  const key=editKey;
+  await Store.save(S); closeSheets(); render();
+  toast(t('msg.unlogged'), { label:t('msg.undo'), fn:async()=>{
+    if(prev) S.days[key]=prev; await Store.save(S); render();
+  }});
+};
+document.getElementById('daySetDefault').onclick=async e=>{
+  const b=e.currentTarget, txt=t('day.setDefault');
+  S.defaults.desc = document.getElementById('dayNote').value.trim();
+  S.defaults.place = document.getElementById('dayPlace').value.trim();
+  await Store.save(S);
+  b.classList.add('done'); b.textContent='\u2713 '+t('msg.defSaved');
+  setTimeout(()=>{ b.classList.remove('done'); b.textContent=txt; },2200);
+};
+document.getElementById('btnStamp').onclick=()=>dayTap(dkey(new Date()));
+document.getElementById('prevM').onclick=()=>{ view.setMonth(view.getMonth()-1); render(); };
+document.getElementById('nextM').onclick=()=>{ view.setMonth(view.getMonth()+1); render(); };
+document.getElementById('fillMonth').onclick=async()=>{
+  const mk=mkey(view); if(S.closures[mk]){ toast(t('msg.closedLock')); return; }
+  const y=view.getFullYear(),m=view.getMonth(),tot=new Date(y,m+1,0).getDate(),we=weekendDays();
+  for(let d=1;d<=tot;d++){ const dt=new Date(y,m,d); if(we.includes(dt.getDay())) continue;
+    const k=`${y}-${p2(m+1)}-${p2(d)}`; S.days[k]=Object.assign({n:'',p:''},S.days[k],{w:1}); }
+  await Store.save(S); render(); toast(t('msg.saved'));
+};
+document.getElementById('clearMonth').onclick=async()=>{
+  const mk=mkey(view); if(S.closures[mk]){ toast(t('msg.closedLock')); return; }
+  if(!confirm(t('msg.confirmClear'))) return;
+  Object.keys(S.days).filter(k=>k.startsWith(mk+'-')).forEach(k=>delete S.days[k]);
+  await Store.save(S); render(); toast(t('msg.saved'));
+};
+
+/* ── close ── */
+function openClose(){
+  const mk=mkey(view), worked=workedIn(mk), before=bankBefore(mk), c=S.closures[mk];
+  document.getElementById('closeIntro').textContent =
+    `${mName(mk)} · ${t('close.worked')}: ${worked} · ${t('close.before')}: ${before}`;
+  document.getElementById('invDays').value = c ? c.billed : worked;
+  document.getElementById('closeInv').value = c ? (c.inv||'') : '';
+  document.getElementById('closeNote').value = c ? (c.note||'') : '';
+  document.getElementById('closeReopen').classList.toggle('hidden',!c);
+  document.getElementById('closeConfirm').textContent = c ? t('close.save') : t('close.confirm');
+  updateCalc(); openSheet('sheetClose');
+}
+function updateCalc(){
+  const mk=mkey(view), worked=workedIn(mk), before=bankBefore(mk);
+  let inv=parseInt(document.getElementById('invDays').value,10); if(isNaN(inv)||inv<0) inv=0;
+  const move=worked-inv, after=before+move, w=document.getElementById('closeWarn');
+  if(after<0){ w.classList.remove('hidden'); w.textContent=`${t('msg.short')} — ${worked+before}`; }
+  else w.classList.add('hidden');
+  const rate=Number(S.billing.rate)||0;
+  document.getElementById('closeCalc').innerHTML=`
+    <div><span>${t('close.before')}</span><b dir="ltr">${before}</b></div>
+    <div><span>${t('close.worked')}</span><b dir="ltr">${worked}</b></div>
+    <div><span>${t('close.billed')}</span><b dir="ltr">−${inv}</b></div>
+    <div class="tot"><span>${move>=0?t('close.toBank'):t('close.fromBank')}</span>
+      <b dir="ltr" style="color:${move>0?'var(--mark)':move<0?'var(--draw)':'inherit'}">${move>0?'+':''}${move}</b></div>
+    <div class="tot"><span>${t('close.after')}</span><b dir="ltr">${after}</b></div>
+    ${rate>0?`<div class="tot"><span>${t('rep.total')}</span><b dir="ltr">${money(inv*rate)}</b></div>`:''}`;
+}
+document.getElementById('invDays').oninput=updateCalc;
+document.getElementById('invMinus').onclick=()=>{const i=document.getElementById('invDays');i.value=Math.max(0,(+i.value||0)-1);updateCalc();};
+document.getElementById('invPlus').onclick=()=>{const i=document.getElementById('invDays');i.value=(+i.value||0)+1;updateCalc();};
+document.getElementById('btnClose').onclick=openClose;
+document.getElementById('closeConfirm').onclick=async()=>{
+  const mk=mkey(view);
+  let inv=parseInt(document.getElementById('invDays').value,10); if(isNaN(inv)||inv<0) inv=0;
+  if(bankBefore(mk)+workedIn(mk)-inv<0){ toast(t('msg.short')); return; }
+  const isNew=!S.closures[mk];
+  S.closures[mk]={billed:inv,inv:document.getElementById('closeInv').value.trim(),
+    note:document.getElementById('closeNote').value.trim(),closedAt:new Date().toISOString()};
+  await Store.save(S); closeSheets();
+  if(isNew){ view.setMonth(view.getMonth()+1); }
+  render(); toast(t('msg.closed'));
+};
+document.getElementById('closeReopen').onclick=async()=>{
+  delete S.closures[mkey(view)]; await Store.save(S); closeSheets(); render(); toast(t('msg.reopened'));
+};
+
+/* ══════════ REPORT ══════════ */
+function reportData(){
+  const mk=mkey(view), c=S.closures[mk], worked=workedIn(mk), before=bankBefore(mk);
+  const billed=c?Number(c.billed):worked;
+  return {mk,c,worked,before,billed,move:worked-billed,after:before+worked-billed};
+}
+function buildReport(){
+  const D=reportData(), rate=Number(S.billing.rate)||0;
+  const days=Object.keys(S.days).filter(k=>k.startsWith(D.mk+'-')&&S.days[k].w).sort();
+  const rows=days.map((k,i)=>{
+    const [y,m,d]=k.split('-').map(Number), dt=new Date(y,m-1,d), r=S.days[k];
+    return `<tr><td class="c-n">${i+1}</td><td class="c-d">${fmtDate(k)}</td><td class="c-w">${DOWS[L][dt.getDay()]}</td>
+      <td>${esc(r.p||'—')}</td><td>${esc(r.n||'—')}</td></tr>`;
+  }).join('');
+  const prev=chain().filter(r=>r.mk<D.mk).slice(-5);
+  const hist=prev.map(r=>`<tr><td>${mName(r.mk)}</td><td class="num">${r.worked}</td><td class="num">${r.billed}</td>
+    <td class="num ${r.move>0?'pl':r.move<0?'mn':''}">${r.move>0?'+':''}${r.move}</td><td class="num">${r.after}</td></tr>`).join('');
+  const now=new Date();
+  const note = D.move>0
+    ? (L==='he' ? `בחשבונית נכללו ${D.billed} ${dayWord(D.billed)} מתוך ${D.worked} שנעבדו. היתרה — ${D.move} ${dayWord(D.move)} — נצברת לבנק הימים וניתן לחייב אותה בתקופות הבאות.`
+                : `${D.billed} of ${D.worked} days worked are included in this invoice. The remaining ${D.move} ${dayWord(D.move)} are carried into the day bank and may be billed in a future period.`)
+    : D.move<0
+    ? (L==='he' ? `נעבדו ${D.worked} ${dayWord(D.worked)} ובחשבונית נכללו ${D.billed}. ההפרש של ${Math.abs(D.move)} ${dayWord(Math.abs(D.move))} נמשך מבנק הימים שנצבר בתקופות קודמות.`
+                : `${D.worked} ${dayWord(D.worked)} were worked and ${D.billed} are billed. The difference of ${Math.abs(D.move)} ${dayWord(Math.abs(D.move))} is drawn from the day bank accumulated in previous periods.`)
+    : (L==='he' ? 'כל ימי העבודה בתקופה חויבו במלואם. בנק הימים לא השתנה.'
+                : 'All days worked in this period are billed in full. The day bank is unchanged.');
+
+  document.getElementById('report').setAttribute('dir', L==='he'?'rtl':'ltr');
+  document.getElementById('report').innerHTML=`
+  <div class="rp-top">
+    <div><div class="rp-eye">${t('rep.eye')}</div><div class="rp-title">${t('rep.title')}</div>
+      <div class="rp-period">${mName(D.mk)}</div></div>
+    <div class="rp-meta">${t('rep.issued')}<b dir="ltr">${fmtDate(dkey(now))}</b>
+      ${D.c&&D.c.inv?`${t('rep.invoice')}<b dir="ltr">${esc(D.c.inv)}</b>`:''}</div>
+  </div>
+  <div class="rp-parties">
+    <div class="rp-party"><div class="rp-lbl">${t('rep.contractor')}</div>
+      <div class="rp-val">${esc(S.profile.name)||'—'}</div>
+      <div class="rp-sub">${[esc(S.profile.biz),esc(S.profile.addr),esc(S.profile.phone),esc(S.profile.email)].filter(Boolean).join('<br>')}</div></div>
+    <div class="rp-party"><div class="rp-lbl">${t('rep.client')}</div>
+      <div class="rp-val">${esc(S.client.name)||'—'}</div>
+      <div class="rp-sub">${[esc(S.client.contact),esc(S.client.email),esc(S.client.phone)].filter(Boolean).join('<br>')}</div></div>
+  </div>
+  <div class="rp-figs">
+    <div class="rp-fig"><b>${D.worked}</b><span>${t('rep.worked')}</span></div>
+    <div class="rp-fig acc"><b>${D.billed}</b><span>${t('rep.billed')}</span></div>
+    <div class="rp-fig"><b dir="ltr">${D.move>0?'+':''}${D.move}</b><span>${t('rep.move')}</span></div>
+    <div class="rp-fig"><b>${D.after}</b><span>${t('rep.balance')}</span></div>
+  </div>
+  <div class="rp-h">${t('rep.days')}</div>
+  <table><thead><tr><th class="c-n">${t('rep.no')}</th><th class="c-d">${t('rep.date')}</th><th class="c-w">${t('rep.day')}</th>
+    <th>${t('rep.place')}</th><th>${t('rep.desc')}</th></tr></thead>
+  <tbody>${rows||`<tr><td colspan="5" style="padding:14px 8px;color:#5A6884">${t('rep.nodays')}</td></tr>`}</tbody></table>
+  <div class="rp-h">${t('rep.bank')}</div>
+  <table><tbody>
+    <tr><td>${t('rep.opening')}</td><td class="num">${D.before}</td></tr>
+    <tr><td>${t('rep.added')}</td><td class="num pl">+${D.worked}</td></tr>
+    <tr><td>${t('rep.out')}</td><td class="num mn">−${D.billed}</td></tr>
+    <tr class="total"><td>${t('rep.closing')}</td><td class="num">${D.after}</td></tr>
+  </tbody></table>
+  <div class="rp-note">${note}${D.c&&D.c.note?'<br><br>'+esc(D.c.note):''}</div>
+  ${rate>0?`<div class="rp-h">${t('rep.billing')}</div>
+  <table><tbody>
+    <tr><td>${t('rep.rate')}</td><td class="num">${money(rate)}</td></tr>
+    <tr><td>${t('rep.qty')}</td><td class="num">${D.billed}</td></tr>
+    <tr class="total"><td>${t('rep.total')}</td><td class="num">${money(rate*D.billed)}</td></tr>
+  </tbody></table><div class="rp-sub" style="margin-top:6px">${t('rep.vat')}</div>`:''}
+  ${hist?`<div class="rp-h">${t('rep.hist')}</div>
+  <table><thead><tr><th>${t('rep.period')}</th><th class="num">${t('rep.hw')}</th><th class="num">${t('rep.hb')}</th>
+    <th class="num">${t('rep.hm')}</th><th class="num">${t('rep.hbal')}</th></tr></thead><tbody>${hist}</tbody></table>`:''}
+  <div class="rp-sign">
+    <div><div class="rp-line"></div><div class="rp-lbl">${t('rep.sigC')} · ${esc(S.profile.name)}</div></div>
+    <div><div class="rp-line"></div><div class="rp-lbl">${t('rep.sigK')}</div></div>
+  </div>
+  <div class="rp-foot"><span>${t('rep.foot')}</span><span>${mName(D.mk)}</span></div>`;
+}
+function pdfName(){
+  const D=reportData();
+  const cl=(S.client.name||'').replace(/[^\w\u0590-\u05FF-]+/g,'_').slice(0,24);
+  return `WorkReport_${D.mk}${cl?'_'+cl:''}.pdf`;
+}
+async function makePdf(){
+  buildReport();
+  await new Promise(r=>setTimeout(r,120));
+  const node=document.getElementById('report');
+  const canvas=await html2canvas(node,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:794});
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+  const pw=210, ph=297;
+  const imgH=canvas.width*(ph/pw);
+  const pages=Math.ceil(canvas.height/imgH);
+  for(let i=0;i<pages;i++){
+    const slice=document.createElement('canvas');
+    slice.width=canvas.width;
+    slice.height=Math.min(imgH, canvas.height-i*imgH);
+    const cx=slice.getContext('2d');
+    cx.fillStyle='#ffffff'; cx.fillRect(0,0,slice.width,slice.height);
+    cx.drawImage(canvas,0,-i*imgH);
+    const h=(slice.height/canvas.width)*pw;
+    if(i>0) pdf.addPage();
+    pdf.addImage(slice.toDataURL('image/jpeg',0.94),'JPEG',0,0,pw,h);
+  }
+  return pdf.output('blob');
+}
+function shareText(){
+  const D=reportData();
+  return L==='he'
+    ? `${t('sh.text')} — ${mName(D.mk)}\n${t('rep.worked')}: ${D.worked}\n${t('rep.billed')}: ${D.billed}\n${t('rep.balance')}: ${D.after}`
+    : `${t('sh.text')} — ${mName(D.mk)}\n${t('rep.worked')}: ${D.worked}\n${t('rep.billed')}: ${D.billed}\n${t('rep.balance')}: ${D.after}`;
+}
+async function exportPdf(btn){
+  const old = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>' + t('exp.building');
+  try{
+    const blob = await makePdf();
+    const file = new File([blob], pdfName(), {type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], title:t('rep.title'), text:shareText()}); }
+      catch(err){ if(err && err.name!=='AbortError') savePdf(blob); }
+    } else {
+      savePdf(blob);
+      const url=URL.createObjectURL(blob);
+      window.open(url,'_blank');
+      setTimeout(()=>URL.revokeObjectURL(url),60000);
+      toast(t('msg.pdfReady'));
+    }
+  }catch(e){ console.error(e); toast(t('msg.err')); }
+  btn.disabled=false; btn.textContent=old;
+}
+function savePdf(blob){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=pdfName();
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),8000);
+}
+document.getElementById('btnExport').onclick = e => exportPdf(e.currentTarget);
+
+/* ══════════ SETTINGS ══════════ */
+function fillSettings(){
+  document.getElementById('sName').value=S.profile.name||'';
+  document.getElementById('sBiz').value=S.profile.biz||'';
+  document.getElementById('sPhone').value=S.profile.phone||'';
+  document.getElementById('sEmail').value=S.profile.email||'';
+  document.getElementById('sAddr').value=S.profile.addr||'';
+  document.getElementById('cName').value=S.client.name||'';
+  document.getElementById('cContact').value=S.client.contact||'';
+  document.getElementById('cEmail').value=S.client.email||'';
+  document.getElementById('cPhone').value=S.client.phone||'';
+  document.getElementById('sRate').value=S.billing.rate||'';
+  document.getElementById('sCur').value=S.billing.cur||'ILS';
+  document.getElementById('sStart').value=S.bankStart||0;
+  document.getElementById('sWeek').value=String(S.weekStart);
+  document.getElementById('dPlace').value=S.defaults.place||'';
+  renderDefaultDesc();
+  renderPresets();
+}
+function renderDefaultDesc(){
+  const sel=document.getElementById('dDesc'); sel.innerHTML='';
+  const none=document.createElement('option'); none.value=''; none.textContent=t('set.none'); sel.appendChild(none);
+  const list=presets().slice();
+  if(S.defaults.desc && !list.includes(S.defaults.desc)) list.push(S.defaults.desc);
+  list.forEach(p=>{ const o=document.createElement('option'); o.value=p; o.textContent=p; sel.appendChild(o); });
+  sel.value=S.defaults.desc||'';
+}
+function renderPresets(){
+  const box=document.getElementById('presetList'); box.innerHTML='';
+  presets().forEach((p,i)=>{
+    const d=document.createElement('div'); d.className='pitem';
+    d.innerHTML=`<span>${esc(p)}</span><button>✕</button>`;
+    d.querySelector('button').onclick=async()=>{
+      if(!S.presets) S.presets=DEF_PRESETS[L].slice();
+      S.presets.splice(i,1); await Store.save(S); renderPresets(); renderDefaultDesc();
+    };
+    box.appendChild(d);
+  });
+}
+document.getElementById('addPreset').onclick=async()=>{
+  const i=document.getElementById('newPreset'), v=i.value.trim(); if(!v) return;
+  if(!S.presets) S.presets=DEF_PRESETS[L].slice();
+  S.presets.push(v); i.value=''; await Store.save(S); renderPresets(); renderDefaultDesc();
+};
+document.getElementById('btnSet').onclick=()=>{ fillSettings(); openSheet('sheetSet'); };
+const bind=(id,fn)=>{ document.getElementById(id).onchange=async e=>{ fn(e.target.value); await Store.save(S); render(); }; };
+bind('sName',v=>S.profile.name=v.trim());  bind('sBiz',v=>S.profile.biz=v.trim());
+bind('sPhone',v=>S.profile.phone=v.trim()); bind('sEmail',v=>S.profile.email=v.trim());
+bind('sAddr',v=>S.profile.addr=v.trim());
+bind('cName',v=>S.client.name=v.trim());   bind('cContact',v=>S.client.contact=v.trim());
+bind('cEmail',v=>S.client.email=v.trim()); bind('cPhone',v=>S.client.phone=v.trim());
+bind('sRate',v=>S.billing.rate=parseFloat(v)||0); bind('sCur',v=>S.billing.cur=v);
+bind('sStart',v=>S.bankStart=parseInt(v,10)||0);
+bind('dDesc',v=>S.defaults.desc=v);
+bind('dPlace',v=>S.defaults.place=v.trim());
+bind('sWeek',v=>{ S.weekStart=parseInt(v,10)||0; S.weekTouched=true; applyLang(); });
+async function setLang(l){ L=l; S.lang=l; if(!S.weekTouched) S.weekStart = l==='he'?0:1;
+  await Store.save(S); applyLang(); render(); fillSettings(); }
+document.getElementById('btnLang').onclick=()=>setLang(L==='en'?'he':'en');
+document.getElementById('langEn').onclick=()=>setLang('en');
+document.getElementById('langHe').onclick=()=>setLang('he');
+
+document.getElementById('btnExpData').onclick=()=>{
+  const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+  a.download=`worklog-backup-${dkey(new Date())}.json`; a.click(); URL.revokeObjectURL(a.href);
+  toast(t('msg.copied'));
+};
+document.getElementById('btnImpData').onclick=()=>document.getElementById('fileIn').click();
+document.getElementById('fileIn').onchange=async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{ const o=JSON.parse(await f.text()); if(!o.days||!o.profile) throw 0;
+    S=Object.assign({v:2,lang:'en',weekStart:0,profile:{},client:{},billing:{rate:0,cur:'ILS'},bankStart:0,presets:null,defaults:{desc:'',place:''},days:{},closures:{}},o);
+    S.defaults=Object.assign({desc:'',place:''},o.defaults||{});
+    L=S.lang||'en'; await Store.save(S); closeSheets(); applyLang(); render(); toast(t('msg.loaded'));
+  }catch(err){ toast(t('msg.badfile')); }
+  e.target.value='';
+};
+
+/* ══════════ INIT ══════════ */
+(async function(){
+  const saved=await Store.load();
+  if(saved) S=Object.assign(S,saved,{profile:Object.assign({},S.profile,saved.profile),
+    client:Object.assign({},S.client,saved.client), billing:Object.assign({},S.billing,saved.billing),
+    defaults:Object.assign({desc:'',place:''},saved.defaults)});
+  else { const nav=(navigator.language||'').toLowerCase(); if(nav.startsWith('he')){ S.lang='he'; S.weekStart=0; } else S.weekStart=1; }
+  L=S.lang||'en';
+  applyLang(); render();
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
+})();
+</script>
+</body>
+</html>
