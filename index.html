@@ -413,8 +413,8 @@ en:{
  'stamp.other':'You are viewing another month.','stamp.back':'Back to current month',
  'cal.title':'Month log','cal.hint':'tap a day','cal.lg1':'workday','cal.lg2':'has description',
  'cal.fill':'Log all business days','cal.clear':'Clear this month',
- 'res.title':'Day bank','res.avail':'days available',
- 'res.empty':'No month has been closed yet. Log your days, then close the month — the difference between days worked and days invoiced is banked here.',
+ 'res.title':'Day bank','res.avail':'available',
+ 'res.empty':'Nothing banked yet. Log your days, then set how many go on the invoice — the difference is banked here.',
  'btn.close':'Close month','btn.closeEdit':'Edit month closing','btn.export':'Export PDF report',
  'btn.invoice':'Set invoice days','sum.tap':'tap to change',
  'inv.title':'Invoice for this month','inv.save':'Save','inv.closeBtn':'Save and close month',
@@ -467,8 +467,8 @@ he:{
  'stamp.other':'אתה צופה בחודש אחר.','stamp.back':'חזרה לחודש הנוכחי',
  'cal.title':'יומן החודש','cal.hint':'הקש על יום','cal.lg1':'יום עבודה','cal.lg2':'קיים תיאור',
  'cal.fill':'סמן את כל ימי החול בחודש','cal.clear':'נקה את החודש',
- 'res.title':'בנק הימים','res.avail':'ימים זמינים',
- 'res.empty':'עדיין לא נסגר אף חודש. סמן ימי עבודה, קבע כמה מהם נכנסים לחשבונית וסגור את החודש — ההפרש ייצבר כאן.',
+ 'res.title':'בנק הימים','res.avail':'זמינים',
+ 'res.empty':'עדיין אין תנועה בבנק. סמן ימי עבודה וקבע כמה מהם נכנסים לחשבונית — ההפרש ייצבר כאן.',
  'btn.close':'סגור חודש','btn.closeEdit':'ערוך סגירת חודש','btn.export':'ייצוא דוח PDF',
  'btn.invoice':'קביעת ימים לחשבונית','sum.tap':'הקש לשינוי',
  'inv.title':'החשבונית לחודש זה','inv.save':'שמור','inv.closeBtn':'שמור וסגור את החודש',
@@ -588,9 +588,10 @@ function billedOf(mk){
 }
 function chain(){
   let bal = Number(S.bankStart)||0; const rows=[];
-  for(const k of Object.keys(S.months).filter(x=>S.months[x].closed).sort()){
-    const c=S.months[k], w=workedIn(k), inv=Number(c.billed)||0;
-    const r={mk:k,before:bal,worked:w,billed:inv,move:w-inv,after:bal+w-inv,inv:c.inv||'',note:c.note||''};
+  for(const k of Object.keys(S.months).filter(x=>billedOf(x)!==null).sort()){
+    const c=S.months[k], w=workedIn(k), inv=billedOf(k);
+    const r={mk:k,before:bal,worked:w,billed:inv,move:w-inv,after:bal+w-inv,
+             inv:c.inv||'',note:c.note||'',closed:!!c.closed};
     bal=r.after; rows.push(r);
   } return rows;
 }
@@ -680,7 +681,7 @@ function renderGrid(){
 function renderBank(){
   const bal=bankNow();
   document.getElementById('resBig').textContent=bal;
-  document.getElementById('resWord').textContent=`${dayWord(bal)} · ${t('res.avail')}`;
+  document.getElementById('resWord').textContent=`${dayWord(bal)} ${t('res.avail')}`;
   const tk=document.getElementById('tokens'); tk.innerHTML='';
   if(bal>0){
     for(let i=0;i<Math.min(bal,60);i++){ const e=document.createElement('i'); e.style.animationDelay=(i*13)+'ms'; tk.appendChild(e); }
@@ -690,7 +691,8 @@ function renderBank(){
   if(!rows.length){ L2.innerHTML=`<div class="empty">${t('res.empty')}</div>`; return; }
   L2.innerHTML = rows.map(r=>{
     const cls=r.move>0?'plus':r.move<0?'minus':'zero';
-    return `<div class="lrow"><div>${mName(r.mk)}<small>${t('led.w')} ${r.worked} · ${t('led.b')} ${r.billed}</small></div>
+    const open = r.closed ? '' : ` <span class="badge open" style="margin:0 0 0 6px">${t('st.open')}</span>`;
+    return `<div class="lrow"><div>${mName(r.mk)}${open}<small>${t('led.w')} ${r.worked} · ${t('led.b')} ${r.billed}</small></div>
       <div class="mv ${cls}" dir="ltr">${r.move>0?'+':''}${r.move}</div><div class="bal" dir="ltr">${r.after}</div></div>`;
   }).join('');
 }
